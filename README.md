@@ -1,242 +1,244 @@
 # 🚀 SkillsProcket – Premium Freelancing Marketplace
+
 ## Folder structure :
+
 Skillpocket/
 ├── frontend/
-│   ├── user/
-│   │   ├── public/
-│   │   │   ├── index.html
-│   │   │   ├── favicon.ico
-│   │   │   └── assets/
-│   │   │       └── images/
-│   │   ├── src/
-│   │   │   ├── api/
-│   │   │   │   ├── axios.js
-│   │   │   │   ├── authApi.js
-│   │   │   │   ├── jobApi.js
-│   │   │   │   ├── profileApi.js
-│   │   │   │   └── messageApi.js
-│   │   │   ├── components/
-│   │   │   │   ├── common/
-│   │   │   │   │   ├── Header.jsx
-│   │   │   │   │   ├── Footer.jsx
-│   │   │   │   │   ├── Button.jsx
-│   │   │   │   │   ├── Input.jsx
-│   │   │   │   │   ├── Modal.jsx
-│   │   │   │   │   ├── Skeleton.jsx
-│   │   │   │   │   ├── Loader.jsx
-│   │   │   │   │   └── ProtectedRoute.jsx
-│   │   │   │   ├── auth/
-│   │   │   │   │   ├── LoginForm.jsx
-│   │   │   │   │   ├── SignupForm.jsx
-│   │   │   │   │   ├── SocialLogin.jsx
-│   │   │   │   │   └── RoleToggle.jsx
-│   │   │   │   ├── home/
-│   │   │   │   │   ├── HeroSection.jsx
-│   │   │   │   │   ├── ServicesSection.jsx
-│   │   │   │   │   ├── FeaturedFreelancers.jsx
-│   │   │   │   │   ├── HowItWorks.jsx
-│   │   │   │   │   ├── StatsSection.jsx
-│   │   │   │   │   └── TestimonialSection.jsx
-│   │   │   │   ├── dashboard/
-│   │   │   │   │   ├── freelancer/
-│   │   │   │   │   │   ├── DashboardStats.jsx
-│   │   │   │   │   │   ├── ActiveProposals.jsx
-│   │   │   │   │   │   ├── EarningsChart.jsx
-│   │   │   │   │   │   └── ProfileCompletion.jsx
-│   │   │   │   │   └── client/
-│   │   │   │   │       ├── ClientStats.jsx
-│   │   │   │   │       ├── ActiveProjects.jsx
-│   │   │   │   │       ├── ProjectTimeline.jsx
-│   │   │   │   │       └── NewProposals.jsx
-│   │   │   │   ├── jobs/
-│   │   │   │   │   ├── JobCard.jsx
-│   │   │   │   │   ├── JobFilters.jsx
-│   │   │   │   │   ├── JobSearch.jsx
-│   │   │   │   │   └── JobDetails.jsx
-│   │   │   │   ├── profile/
-│   │   │   │   │   ├── ProfileHeader.jsx
-│   │   │   │   │   ├── SkillsSection.jsx
-│   │   │   │   │   ├── PortfolioGallery.jsx
-│   │   │   │   │   └── ReviewsList.jsx
-│   │   │   │   ├── messaging/
-│   │   │   │   │   ├── ConversationList.jsx
-│   │   │   │   │   ├── MessageThread.jsx
-│   │   │   │   │   ├── MessageInput.jsx
-│   │   │   │   │   └── FileAttachment.jsx
-│   │   │   │   └── wallet/
-│   │   │   │       ├── WalletStats.jsx
-│   │   │   │       ├── TransactionTable.jsx
-│   │   │   │       └── WithdrawModal.jsx
-│   │   │   ├── pages/
-│   │   │   │   ├── Home.jsx
-│   │   │   │   ├── Login.jsx
-│   │   │   │   ├── Signup.jsx
-│   │   │   │   ├── FreelancerDashboard.jsx
-│   │   │   │   ├── ClientDashboard.jsx
-│   │   │   │   ├── JobSearch.jsx
-│   │   │   │   ├── JobDetails.jsx
-│   │   │   │   ├── Profile.jsx
-│   │   │   │   ├── Messages.jsx
-│   │   │   │   ├── Wallet.jsx
-│   │   │   │   ├── Settings.jsx
-│   │   │   │   └── NotFound.jsx
-│   │   │   ├── hooks/
-│   │   │   │   ├── useAuth.js
-│   │   │   │   ├── useJobs.js
-│   │   │   │   ├── useProfile.js
-│   │   │   │   ├── useMessages.js
-│   │   │   │   ├── useWallet.js
-│   │   │   │   └── useDebounce.js
-│   │   │   ├── context/
-│   │   │   │   ├── AuthContext.jsx
-│   │   │   │   ├── ThemeContext.jsx
-│   │   │   │   └── NotificationContext.jsx
-│   │   │   ├── utils/
-│   │   │   │   ├── helpers.js
-│   │   │   │   ├── validators.js
-│   │   │   │   ├── constants.js
-│   │   │   │   └── formatters.js
-│   │   │   ├── styles/
-│   │   │   │   ├── index.css
-│   │   │   │   └── animations.css
-│   │   │   ├── assets/
-│   │   │   │   ├── images/
-│   │   │   │   ├── icons/
-│   │   │   │   └── fonts/
-│   │   │   ├── App.jsx
-│   │   │   ├── main.jsx
-│   │   │   └── routes.jsx
-│   │   ├── .env
-│   │   ├── .env.example
-│   │   ├── package.json
-│   │   ├── tailwind.config.js
-│   │   ├── postcss.config.js
-│   │   ├── vite.config.js
-│   │   └── .gitignore
-│   │
-│   └── admin/
-│       ├── public/
-│       ├── src/
-│       │   ├── api/
-│       │   ├── components/
-│       │   │   ├── common/
-│       │   │   ├── dashboard/
-│       │   │   ├── users/
-│       │   │   ├── jobs/
-│       │   │   ├── disputes/
-│       │   │   └── analytics/
-│       │   ├── pages/
-│       │   │   ├── AdminDashboard.jsx
-│       │   │   ├── UserManagement.jsx
-│       │   │   ├── JobManagement.jsx
-│       │   │   ├── DisputeResolution.jsx
-│       │   │   ├── FinancialMonitoring.jsx
-│       │   │   └── Settings.jsx
-│       │   ├── hooks/
-│       │   ├── context/
-│       │   ├── utils/
-│       │   ├── styles/
-│       │   ├── App.jsx
-│       │   └── main.jsx
-│       ├── .env
-│       ├── package.json
-│       ├── tailwind.config.js
-│       └── vite.config.js
+│ ├── user/
+│ │ ├── public/
+│ │ │ ├── index.html
+│ │ │ ├── favicon.ico
+│ │ │ └── assets/
+│ │ │ └── images/
+│ │ ├── src/
+│ │ │ ├── api/
+│ │ │ │ ├── axios.js
+│ │ │ │ ├── authApi.js
+│ │ │ │ ├── jobApi.js
+│ │ │ │ ├── profileApi.js
+│ │ │ │ └── messageApi.js
+│ │ │ ├── components/
+│ │ │ │ ├── common/
+│ │ │ │ │ ├── Header.jsx
+│ │ │ │ │ ├── Footer.jsx
+│ │ │ │ │ ├── Button.jsx
+│ │ │ │ │ ├── Input.jsx
+│ │ │ │ │ ├── Modal.jsx
+│ │ │ │ │ ├── Skeleton.jsx
+│ │ │ │ │ ├── Loader.jsx
+│ │ │ │ │ └── ProtectedRoute.jsx
+│ │ │ │ ├── auth/
+│ │ │ │ │ ├── LoginForm.jsx
+│ │ │ │ │ ├── SignupForm.jsx
+│ │ │ │ │ ├── SocialLogin.jsx
+│ │ │ │ │ └── RoleToggle.jsx
+│ │ │ │ ├── home/
+│ │ │ │ │ ├── HeroSection.jsx
+│ │ │ │ │ ├── ServicesSection.jsx
+│ │ │ │ │ ├── FeaturedFreelancers.jsx
+│ │ │ │ │ ├── HowItWorks.jsx
+│ │ │ │ │ ├── StatsSection.jsx
+│ │ │ │ │ └── TestimonialSection.jsx
+│ │ │ │ ├── dashboard/
+│ │ │ │ │ ├── freelancer/
+│ │ │ │ │ │ ├── DashboardStats.jsx
+│ │ │ │ │ │ ├── ActiveProposals.jsx
+│ │ │ │ │ │ ├── EarningsChart.jsx
+│ │ │ │ │ │ └── ProfileCompletion.jsx
+│ │ │ │ │ └── client/
+│ │ │ │ │ ├── ClientStats.jsx
+│ │ │ │ │ ├── ActiveProjects.jsx
+│ │ │ │ │ ├── ProjectTimeline.jsx
+│ │ │ │ │ └── NewProposals.jsx
+│ │ │ │ ├── jobs/
+│ │ │ │ │ ├── JobCard.jsx
+│ │ │ │ │ ├── JobFilters.jsx
+│ │ │ │ │ ├── JobSearch.jsx
+│ │ │ │ │ └── JobDetails.jsx
+│ │ │ │ ├── profile/
+│ │ │ │ │ ├── ProfileHeader.jsx
+│ │ │ │ │ ├── SkillsSection.jsx
+│ │ │ │ │ ├── PortfolioGallery.jsx
+│ │ │ │ │ └── ReviewsList.jsx
+│ │ │ │ ├── messaging/
+│ │ │ │ │ ├── ConversationList.jsx
+│ │ │ │ │ ├── MessageThread.jsx
+│ │ │ │ │ ├── MessageInput.jsx
+│ │ │ │ │ └── FileAttachment.jsx
+│ │ │ │ └── wallet/
+│ │ │ │ ├── WalletStats.jsx
+│ │ │ │ ├── TransactionTable.jsx
+│ │ │ │ └── WithdrawModal.jsx
+│ │ │ ├── pages/
+│ │ │ │ ├── Home.jsx
+│ │ │ │ ├── Login.jsx
+│ │ │ │ ├── Signup.jsx
+│ │ │ │ ├── FreelancerDashboard.jsx
+│ │ │ │ ├── ClientDashboard.jsx
+│ │ │ │ ├── JobSearch.jsx
+│ │ │ │ ├── JobDetails.jsx
+│ │ │ │ ├── Profile.jsx
+│ │ │ │ ├── Messages.jsx
+│ │ │ │ ├── Wallet.jsx
+│ │ │ │ ├── Settings.jsx
+│ │ │ │ └── NotFound.jsx
+│ │ │ ├── hooks/
+│ │ │ │ ├── useAuth.js
+│ │ │ │ ├── useJobs.js
+│ │ │ │ ├── useProfile.js
+│ │ │ │ ├── useMessages.js
+│ │ │ │ ├── useWallet.js
+│ │ │ │ └── useDebounce.js
+│ │ │ ├── context/
+│ │ │ │ ├── AuthContext.jsx
+│ │ │ │ ├── ThemeContext.jsx
+│ │ │ │ └── NotificationContext.jsx
+│ │ │ ├── utils/
+│ │ │ │ ├── helpers.js
+│ │ │ │ ├── validators.js
+│ │ │ │ ├── constants.js
+│ │ │ │ └── formatters.js
+│ │ │ ├── styles/
+│ │ │ │ ├── index.css
+│ │ │ │ └── animations.css
+│ │ │ ├── assets/
+│ │ │ │ ├── images/
+│ │ │ │ ├── icons/
+│ │ │ │ └── fonts/
+│ │ │ ├── App.jsx
+│ │ │ ├── main.jsx
+│ │ │ └── routes.jsx
+│ │ ├── .env
+│ │ ├── .env.example
+│ │ ├── package.json
+│ │ ├── tailwind.config.js
+│ │ ├── postcss.config.js
+│ │ ├── vite.config.js
+│ │ └── .gitignore
+│ │
+│ └── admin/
+│ ├── public/
+│ ├── src/
+│ │ ├── api/
+│ │ ├── components/
+│ │ │ ├── common/
+│ │ │ ├── dashboard/
+│ │ │ ├── users/
+│ │ │ ├── jobs/
+│ │ │ ├── disputes/
+│ │ │ └── analytics/
+│ │ ├── pages/
+│ │ │ ├── AdminDashboard.jsx
+│ │ │ ├── UserManagement.jsx
+│ │ │ ├── JobManagement.jsx
+│ │ │ ├── DisputeResolution.jsx
+│ │ │ ├── FinancialMonitoring.jsx
+│ │ │ └── Settings.jsx
+│ │ ├── hooks/
+│ │ ├── context/
+│ │ ├── utils/
+│ │ ├── styles/
+│ │ ├── App.jsx
+│ │ └── main.jsx
+│ ├── .env
+│ ├── package.json
+│ ├── tailwind.config.js
+│ └── vite.config.js
 │
 ├── backend/
-│   ├── user/
-│   │   ├── src/
-│   │   │   ├── config/
-│   │   │   │   ├── database.js
-│   │   │   │   ├── cloudinary.js
-│   │   │   │   ├── redis.js
-│   │   │   │   └── env.js
-│   │   │   ├── models/
-│   │   │   │   ├── User.js
-│   │   │   │   ├── Job.js
-│   │   │   │   ├── Proposal.js
-│   │   │   │   ├── Message.js
-│   │   │   │   ├── Transaction.js
-│   │   │   │   ├── Review.js
-│   │   │   │   └── Notification.js
-│   │   │   ├── controllers/
-│   │   │   │   ├── authController.js
-│   │   │   │   ├── userController.js
-│   │   │   │   ├── jobController.js
-│   │   │   │   ├── proposalController.js
-│   │   │   │   ├── messageController.js
-│   │   │   │   ├── transactionController.js
-│   │   │   │   └── reviewController.js
-│   │   │   ├── routes/
-│   │   │   │   ├── authRoutes.js
-│   │   │   │   ├── userRoutes.js
-│   │   │   │   ├── jobRoutes.js
-│   │   │   │   ├── proposalRoutes.js
-│   │   │   │   ├── messageRoutes.js
-│   │   │   │   ├── transactionRoutes.js
-│   │   │   │   └── reviewRoutes.js
-│   │   │   ├── middlewares/
-│   │   │   │   ├── authMiddleware.js
-│   │   │   │   ├── errorHandler.js
-│   │   │   │   ├── validator.js
-│   │   │   │   ├── upload.js
-│   │   │   │   └── rateLimiter.js
-│   │   │   ├── services/
-│   │   │   │   ├── emailService.js
-│   │   │   │   ├── paymentService.js
-│   │   │   │   ├── notificationService.js
-│   │   │   │   └── socketService.js
-│   │   │   ├── utils/
-│   │   │   │   ├── helpers.js
-│   │   │   │   ├── validators.js
-│   │   │   │   ├── constants.js
-│   │   │   │   └── logger.js
-│   │   │   ├── socket/
-│   │   │   │   ├── index.js
-│   │   │   │   ├── messageHandler.js
-│   │   │   │   └── notificationHandler.js
-│   │   │   ├── app.js
-│   │   │   └── server.js
-│   │   ├── uploads/
-│   │   ├── logs/
-│   │   ├── .env
-│   │   ├── .env.example
-│   │   ├── package.json
-│   │   └── .gitignore
-│   │
-│   └── admin/
-│       ├── src/
-│       │   ├── config/
-│       │   ├── models/
-│       │   │   └── Admin.js
-│       │   ├── controllers/
-│       │   │   ├── adminAuthController.js
-│       │   │   ├── userManagementController.js
-│       │   │   ├── jobManagementController.js
-│       │   │   ├── disputeController.js
-│       │   │   └── analyticsController.js
-│       │   ├── routes/
-│       │   │   ├── adminAuthRoutes.js
-│       │   │   ├── userManagementRoutes.js
-│       │   │   ├── jobManagementRoutes.js
-│       │   │   ├── disputeRoutes.js
-│       │   │   └── analyticsRoutes.js
-│       │   ├── middlewares/
-│       │   │   └── adminAuth.js
-│       │   ├── services/
-│       │   ├── utils/
-│       │   ├── app.js
-│       │   └── server.js
-│       ├── .env
-│       ├── package.json
-│       └── .gitignore
+│ ├── user/
+│ │ ├── src/
+│ │ │ ├── config/
+│ │ │ │ ├── database.js
+│ │ │ │ ├── cloudinary.js
+│ │ │ │ ├── redis.js
+│ │ │ │ └── env.js
+│ │ │ ├── models/
+│ │ │ │ ├── User.js
+│ │ │ │ ├── Job.js
+│ │ │ │ ├── Proposal.js
+│ │ │ │ ├── Message.js
+│ │ │ │ ├── Transaction.js
+│ │ │ │ ├── Review.js
+│ │ │ │ └── Notification.js
+│ │ │ ├── controllers/
+│ │ │ │ ├── authController.js
+│ │ │ │ ├── userController.js
+│ │ │ │ ├── jobController.js
+│ │ │ │ ├── proposalController.js
+│ │ │ │ ├── messageController.js
+│ │ │ │ ├── transactionController.js
+│ │ │ │ └── reviewController.js
+│ │ │ ├── routes/
+│ │ │ │ ├── authRoutes.js
+│ │ │ │ ├── userRoutes.js
+│ │ │ │ ├── jobRoutes.js
+│ │ │ │ ├── proposalRoutes.js
+│ │ │ │ ├── messageRoutes.js
+│ │ │ │ ├── transactionRoutes.js
+│ │ │ │ └── reviewRoutes.js
+│ │ │ ├── middlewares/
+│ │ │ │ ├── authMiddleware.js
+│ │ │ │ ├── errorHandler.js
+│ │ │ │ ├── validator.js
+│ │ │ │ ├── upload.js
+│ │ │ │ └── rateLimiter.js
+│ │ │ ├── services/
+│ │ │ │ ├── emailService.js
+│ │ │ │ ├── paymentService.js
+│ │ │ │ ├── notificationService.js
+│ │ │ │ └── socketService.js
+│ │ │ ├── utils/
+│ │ │ │ ├── helpers.js
+│ │ │ │ ├── validators.js
+│ │ │ │ ├── constants.js
+│ │ │ │ └── logger.js
+│ │ │ ├── socket/
+│ │ │ │ ├── index.js
+│ │ │ │ ├── messageHandler.js
+│ │ │ │ └── notificationHandler.js
+│ │ │ ├── app.js
+│ │ │ └── server.js
+│ │ ├── uploads/
+│ │ ├── logs/
+│ │ ├── .env
+│ │ ├── .env.example
+│ │ ├── package.json
+│ │ └── .gitignore
+│ │
+│ └── admin/
+│ ├── src/
+│ │ ├── config/
+│ │ ├── models/
+│ │ │ └── Admin.js
+│ │ ├── controllers/
+│ │ │ ├── adminAuthController.js
+│ │ │ ├── userManagementController.js
+│ │ │ ├── jobManagementController.js
+│ │ │ ├── disputeController.js
+│ │ │ └── analyticsController.js
+│ │ ├── routes/
+│ │ │ ├── adminAuthRoutes.js
+│ │ │ ├── userManagementRoutes.js
+│ │ │ ├── jobManagementRoutes.js
+│ │ │ ├── disputeRoutes.js
+│ │ │ └── analyticsRoutes.js
+│ │ ├── middlewares/
+│ │ │ └── adminAuth.js
+│ │ ├── services/
+│ │ ├── utils/
+│ │ ├── app.js
+│ │ └── server.js
+│ ├── .env
+│ ├── package.json
+│ └── .gitignore
 │
 ├── shared/
-│   ├── constants/
-│   │   ├── roles.js
-│   │   ├── status.js
-│   │   └── errors.js
-│   └── types/
+│ ├── constants/
+│ │ ├── roles.js
+│ │ ├── status.js
+│ │ └── errors.js
+│ └── types/
 │
 ├── .gitignore
 ├── README.md
@@ -379,8 +381,9 @@ Accessible motion (no excessive animation)
 
 ## 📁 Project Structure
 
-```bash
+```text
 skillsprocket/
+│
 ├── frontend/
 │   ├── user/
 │   │   ├── src/
@@ -460,13 +463,16 @@ npm run dev
 ## 🔐 API testing with insomnia
 
 ## Base URL
+
 ```
 Development: http://localhost:5000/api
 Production: https://api.skillsprocket.com/api
 ```
 
 ## Authentication
+
 Most endpoints require JWT authentication. Include the token in the Authorization header:
+
 ```
 Authorization: Bearer <your_jwt_token>
 ```
@@ -476,9 +482,11 @@ Authorization: Bearer <your_jwt_token>
 ## 📍 Authentication Endpoints
 
 ### 1. Register User
+
 **POST** `/auth/register`
 
 **Request Body:**
+
 ```json
 {
   "firstName": "John",
@@ -491,6 +499,7 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -510,9 +519,11 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 2. Login
+
 **POST** `/auth/login`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -521,6 +532,7 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -540,9 +552,11 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 3. Verify Email
+
 **POST** `/auth/verify-email`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -551,9 +565,11 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 4. Forgot Password
+
 **POST** `/auth/forgot-password`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com"
@@ -561,9 +577,11 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 5. Reset Password
+
 **POST** `/auth/reset-password`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -573,6 +591,7 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 6. Logout
+
 **POST** `/auth/logout`
 **Headers:** `Authorization: Bearer <token>`
 
@@ -581,10 +600,12 @@ Authorization: Bearer <your_jwt_token>
 ## 👤 User Endpoints
 
 ### 1. Get Current User Profile
+
 **GET** `/users/me`
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -608,10 +629,12 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 2. Update Profile
+
 **PUT** `/users/me`
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "bio": "Experienced full-stack developer",
@@ -622,22 +645,28 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 3. Upload Profile Picture
+
 **POST** `/users/upload-profile-picture`
-**Headers:** 
+**Headers:**
+
 - `Authorization: Bearer <token>`
 - `Content-Type: multipart/form-data`
 
 **Form Data:**
+
 - `profilePicture`: File
 
 ### 4. Get User by ID
+
 **GET** `/users/:userId`
 
 ### 5. Update Password
+
 **PUT** `/users/me/password`
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "currentPassword": "OldPassword123!",
@@ -650,10 +679,12 @@ Authorization: Bearer <your_jwt_token>
 ## 💼 Job Endpoints
 
 ### 1. Create Job (Client Only)
+
 **POST** `/jobs`
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "title": "Build a React Dashboard",
@@ -671,6 +702,7 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -696,8 +728,10 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 2. Get All Jobs
+
 **GET** `/jobs`
 **Query Parameters:**
+
 - `page` (default: 1)
 - `limit` (default: 10)
 - `category` (optional)
@@ -710,6 +744,7 @@ Authorization: Bearer <your_jwt_token>
 **Example:** `/jobs?page=1&limit=10&category=Web Development&skills=React,Node.js`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -727,17 +762,21 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 3. Get Job by ID
+
 **GET** `/jobs/:jobId`
 
 ### 4. Update Job
+
 **PUT** `/jobs/:jobId`
 **Headers:** `Authorization: Bearer <token>`
 
 ### 5. Delete Job
+
 **DELETE** `/jobs/:jobId`
 **Headers:** `Authorization: Bearer <token>`
 
 ### 6. Get My Posted Jobs (Client)
+
 **GET** `/jobs/my-jobs`
 **Headers:** `Authorization: Bearer <token>`
 
@@ -746,10 +785,12 @@ Authorization: Bearer <your_jwt_token>
 ## 📝 Proposal Endpoints
 
 ### 1. Submit Proposal (Freelancer Only)
+
 **POST** `/proposals`
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "jobId": "507f1f77bcf86cd799439012",
@@ -777,6 +818,7 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -798,22 +840,27 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 2. Get Proposals for Job (Client)
+
 **GET** `/proposals/job/:jobId`
 **Headers:** `Authorization: Bearer <token>`
 
 ### 3. Get My Proposals (Freelancer)
+
 **GET** `/proposals/my-proposals`
 **Headers:** `Authorization: Bearer <token>`
 
 ### 4. Accept Proposal (Client)
+
 **PUT** `/proposals/:proposalId/accept`
 **Headers:** `Authorization: Bearer <token>`
 
 ### 5. Reject Proposal (Client)
+
 **PUT** `/proposals/:proposalId/reject`
 **Headers:** `Authorization: Bearer <token>`
 
 ### 6. Withdraw Proposal (Freelancer)
+
 **DELETE** `/proposals/:proposalId`
 **Headers:** `Authorization: Bearer <token>`
 
@@ -822,10 +869,12 @@ Authorization: Bearer <your_jwt_token>
 ## 💬 Message Endpoints
 
 ### 1. Get All Conversations
+
 **GET** `/messages/conversations`
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -855,15 +904,18 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 2. Get Messages in Conversation
+
 **GET** `/messages/conversation/:conversationId`
 **Headers:** `Authorization: Bearer <token>`
 **Query:** `?page=1&limit=50`
 
 ### 3. Send Message
+
 **POST** `/messages`
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "recipientId": "507f1f77bcf86cd799439015",
@@ -873,17 +925,21 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 4. Upload File Attachment
+
 **POST** `/messages/upload`
-**Headers:** 
+**Headers:**
+
 - `Authorization: Bearer <token>`
 - `Content-Type: multipart/form-data`
 
 **Form Data:**
+
 - `file`: File
 - `recipientId`: String
 - `conversationId`: String (optional)
 
 ### 5. Mark as Read
+
 **PUT** `/messages/conversation/:conversationId/read`
 **Headers:** `Authorization: Bearer <token>`
 
@@ -892,32 +948,37 @@ Authorization: Bearer <your_jwt_token>
 ## 💳 Transaction Endpoints
 
 ### 1. Get Wallet Balance
+
 **GET** `/transactions/wallet`
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "success": true,
   "data": {
-    "balance": 2500.50,
-    "pendingAmount": 800.00,
-    "totalEarnings": 15000.00,
-    "availableForWithdrawal": 1700.50
+    "balance": 2500.5,
+    "pendingAmount": 800.0,
+    "totalEarnings": 15000.0,
+    "availableForWithdrawal": 1700.5
   }
 }
 ```
 
 ### 2. Get Transaction History
+
 **GET** `/transactions`
 **Headers:** `Authorization: Bearer <token>`
 **Query:** `?page=1&limit=20&type=credit&status=completed`
 
 ### 3. Create Payment Intent (Client)
+
 **POST** `/transactions/payment-intent`
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "jobId": "507f1f77bcf86cd799439012",
@@ -927,10 +988,12 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 4. Release Payment (Client)
+
 **POST** `/transactions/release`
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "transactionId": "507f1f77bcf86cd799439017",
@@ -939,10 +1002,12 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 5. Request Withdrawal (Freelancer)
+
 **POST** `/transactions/withdraw`
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "amount": 1000,
@@ -956,6 +1021,7 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### 6. Get Transaction by ID
+
 **GET** `/transactions/:transactionId`
 **Headers:** `Authorization: Bearer <token>`
 
@@ -964,10 +1030,12 @@ Authorization: Bearer <your_jwt_token>
 ## ⭐ Review Endpoints
 
 ### 1. Create Review
+
 **POST** `/reviews`
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "jobId": "507f1f77bcf86cd799439012",
@@ -983,10 +1051,9 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
-## testing insomnia collection 
+## testing insomnia collection
 
-
-```json {
+````json {
   "_type": "export",
   "__export_format": 4,
   "__export_date": "2026-01-15T00:00:00.000Z",
@@ -1907,25 +1974,25 @@ socket.emit('send_message', {
 // Typing indicator
 socket.emit('typing', { conversationId: '507f1f77bcf86cd799439014' })
 socket.emit('stop_typing', { conversationId: '507f1f77bcf86cd799439014' })
-```
+````
 
 ### Server → Client Events
 
 ```javascript
 // New message received
-socket.on('new_message', (message) => {
+socket.on("new_message", (message) => {
   // Handle new message
-})
+});
 
 // User typing
-socket.on('user_typing', (data) => {
+socket.on("user_typing", (data) => {
   // Show typing indicator
-})
+});
 
 // Notification
-socket.on('notification', (notification) => {
+socket.on("notification", (notification) => {
   // Show notification
-})
+});
 ```
 
 ---
@@ -1933,6 +2000,7 @@ socket.on('notification', (notification) => {
 ## 📊 Response Format
 
 ### Success Response
+
 ```json
 {
   "success": true,
@@ -1942,6 +2010,7 @@ socket.on('notification', (notification) => {
 ```
 
 ### Error Response
+
 ```json
 {
   "success": false,
@@ -1959,6 +2028,7 @@ socket.on('notification', (notification) => {
 ```
 
 ### Error Codes
+
 - `400` - Bad Request
 - `401` - Unauthorized
 - `403` - Forbidden
