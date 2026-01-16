@@ -1,7 +1,7 @@
 {
-  "name": "skillsprocket-backend",
+  "name": "skillspocket-backend",
   "version": "1.0.0",
-  "description": "Backend API for SkillsProcket freelancing marketplace",
+  "description": "Backend API for skillspocket freelancing marketplace",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -15,7 +15,7 @@
     "marketplace",
     "api"
   ],
-  "author": "SkillsProcket Team",
+  "author": "skillspocket Team",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",

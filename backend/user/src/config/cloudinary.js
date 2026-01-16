@@ -1,7 +1,7 @@
 // ============================================
 // FILE: backend/user/src/config/cloudinary.js
 // ============================================
-const cloudinary = require('cloudinary').v2;
+const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -10,12 +10,12 @@ cloudinary.config({
   secure: true,
 });
 
-const uploadToCloudinary = async (file, folder = 'skillsprocket') => {
+const uploadToCloudinary = async (file, folder = "skillspocket") => {
   try {
     const result = await cloudinary.uploader.upload(file.path, {
       folder: folder,
-      resource_type: 'auto',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'doc', 'docx'],
+      resource_type: "auto",
+      allowed_formats: ["jpg", "jpeg", "png", "webp", "pdf", "doc", "docx"],
     });
 
     return {

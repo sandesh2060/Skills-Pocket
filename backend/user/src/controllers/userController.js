@@ -1,10 +1,13 @@
 // ============================================
 // FILE: backend/user/src/controllers/userController.js
 // ============================================
-const User = require('../models/User');
-const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudinary');
-const logger = require('../utils/logger');
-const fs = require('fs');
+const User = require("../models/User");
+const {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} = require("../config/cloudinary");
+const logger = require("../utils/logger");
+const fs = require("fs");
 
 // @desc    Update profile
 // @route   PUT /api/users/me
@@ -12,14 +15,14 @@ const fs = require('fs');
 exports.updateProfile = async (req, res) => {
   try {
     const allowedFields = [
-      'bio',
-      'skills',
-      'hourlyRate',
-      'location',
-      'education',
-      'experience',
-      'certifications',
-      'languages',
+      "bio",
+      "skills",
+      "hourlyRate",
+      "location",
+      "education",
+      "experience",
+      "certifications",
+      "languages",
     ];
 
     const updates = {};
@@ -36,14 +39,14 @@ exports.updateProfile = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
       data: user,
     });
   } catch (error) {
     logger.error(`Update profile error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to update profile',
+      message: "Failed to update profile",
       error: error.message,
     });
   }
@@ -54,12 +57,12 @@ exports.updateProfile = async (req, res) => {
 // @access  Public
 exports.getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findById(req.params.id).select("-password");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: "User not found",
       });
     }
 
@@ -71,7 +74,7 @@ exports.getUserById = async (req, res) => {
     logger.error(`Get user by ID error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch user',
+      message: "Failed to fetch user",
       error: error.message,
     });
   }
@@ -85,7 +88,7 @@ exports.uploadProfilePicture = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'Please upload a file',
+        message: "Please upload a file",
       });
     }
 
@@ -97,7 +100,7 @@ exports.uploadProfilePicture = async (req, res) => {
     }
 
     // Upload new picture
-    const result = await uploadToCloudinary(req.file, 'skillsprocket/profiles');
+    const result = await uploadToCloudinary(req.file, "skillspocket/profiles");
 
     user.profilePicture = {
       url: result.url,
@@ -111,7 +114,7 @@ exports.uploadProfilePicture = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Profile picture uploaded successfully',
+      message: "Profile picture uploaded successfully",
       data: user.profilePicture,
     });
   } catch (error) {
@@ -119,7 +122,7 @@ exports.uploadProfilePicture = async (req, res) => {
     if (req.file) fs.unlinkSync(req.file.path);
     res.status(500).json({
       success: false,
-      message: 'Failed to upload profile picture',
+      message: "Failed to upload profile picture",
       error: error.message,
     });
   }
@@ -132,14 +135,14 @@ exports.updatePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user.id).select('+password');
+    const user = await User.findById(req.user.id).select("+password");
 
     // Check current password
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Current password is incorrect',
+        message: "Current password is incorrect",
       });
     }
 
@@ -148,13 +151,13 @@ exports.updatePassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Password updated successfully',
+      message: "Password updated successfully",
     });
   } catch (error) {
     logger.error(`Update password error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to update password',
+      message: "Failed to update password",
       error: error.message,
     });
   }
@@ -176,7 +179,10 @@ exports.addPortfolioItem = async (req, res) => {
     };
 
     if (req.file) {
-      const result = await uploadToCloudinary(req.file, 'skillsprocket/portfolio');
+      const result = await uploadToCloudinary(
+        req.file,
+        "skillspocket/portfolio"
+      );
       portfolioItem.image = {
         url: result.url,
         publicId: result.publicId,
@@ -189,7 +195,7 @@ exports.addPortfolioItem = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Portfolio item added successfully',
+      message: "Portfolio item added successfully",
       data: user.portfolio[user.portfolio.length - 1],
     });
   } catch (error) {
@@ -197,7 +203,7 @@ exports.addPortfolioItem = async (req, res) => {
     if (req.file) fs.unlinkSync(req.file.path);
     res.status(500).json({
       success: false,
-      message: 'Failed to add portfolio item',
+      message: "Failed to add portfolio item",
       error: error.message,
     });
   }
@@ -214,7 +220,7 @@ exports.deletePortfolioItem = async (req, res) => {
     if (!item) {
       return res.status(404).json({
         success: false,
-        message: 'Portfolio item not found',
+        message: "Portfolio item not found",
       });
     }
 
@@ -227,13 +233,13 @@ exports.deletePortfolioItem = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Portfolio item deleted successfully',
+      message: "Portfolio item deleted successfully",
     });
   } catch (error) {
     logger.error(`Delete portfolio error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete portfolio item',
+      message: "Failed to delete portfolio item",
       error: error.message,
     });
   }

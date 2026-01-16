@@ -1,10 +1,10 @@
 // ============================================
 // FILE: backend/user/src/controllers/authController.js
 // ============================================
-const User = require('../models/User');
-const { sendEmail } = require('../services/emailService');
-const logger = require('../utils/logger');
-const { generateOTP } = require('../utils/helpers');
+const User = require("../models/User");
+const { sendEmail } = require("../services/emailService");
+const logger = require("../utils/logger");
+const { generateOTP } = require("../utils/helpers");
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -18,7 +18,7 @@ exports.register = async (req, res) => {
     if (userExists) {
       return res.status(409).json({
         success: false,
-        message: 'User with this email already exists',
+        message: "User with this email already exists",
       });
     }
 
@@ -40,8 +40,8 @@ exports.register = async (req, res) => {
     try {
       await sendEmail({
         to: user.email,
-        subject: 'Email Verification - SkillsProcket',
-        template: 'emailVerification',
+        subject: "Email Verification - skillspocket",
+        template: "emailVerification",
         data: {
           name: user.firstName,
           otp: verificationToken,
@@ -56,7 +56,7 @@ exports.register = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful. Please verify your email.',
+      message: "Registration successful. Please verify your email.",
       data: {
         user: {
           id: user._id,
@@ -73,7 +73,7 @@ exports.register = async (req, res) => {
     logger.error(`Registration error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Registration failed',
+      message: "Registration failed",
       error: error.message,
     });
   }
@@ -90,16 +90,16 @@ exports.login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide email and password',
+        message: "Please provide email and password",
       });
     }
 
     // Check if user exists
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select("+password");
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials',
+        message: "Invalid credentials",
       });
     }
 
@@ -107,7 +107,7 @@ exports.login = async (req, res) => {
     if (user.isSuspended) {
       return res.status(403).json({
         success: false,
-        message: 'Your account has been suspended',
+        message: "Your account has been suspended",
         reason: user.suspensionReason,
       });
     }
@@ -117,7 +117,7 @@ exports.login = async (req, res) => {
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials',
+        message: "Invalid credentials",
       });
     }
 
@@ -130,7 +130,7 @@ exports.login = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Login successful',
+      message: "Login successful",
       data: {
         user: {
           id: user._id,
@@ -148,7 +148,7 @@ exports.login = async (req, res) => {
     logger.error(`Login error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Login failed',
+      message: "Login failed",
       error: error.message,
     });
   }
@@ -170,7 +170,7 @@ exports.verifyEmail = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired verification code',
+        message: "Invalid or expired verification code",
       });
     }
 
@@ -181,13 +181,13 @@ exports.verifyEmail = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Email verified successfully',
+      message: "Email verified successfully",
     });
   } catch (error) {
     logger.error(`Email verification error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Email verification failed',
+      message: "Email verification failed",
       error: error.message,
     });
   }
@@ -204,14 +204,14 @@ exports.resendVerification = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: "User not found",
       });
     }
 
     if (user.isVerified) {
       return res.status(400).json({
         success: false,
-        message: 'Email already verified',
+        message: "Email already verified",
       });
     }
 
@@ -220,8 +220,8 @@ exports.resendVerification = async (req, res) => {
 
     await sendEmail({
       to: user.email,
-      subject: 'Email Verification - SkillsProcket',
-      template: 'emailVerification',
+      subject: "Email Verification - skillspocket",
+      template: "emailVerification",
       data: {
         name: user.firstName,
         otp: verificationToken,
@@ -230,13 +230,13 @@ exports.resendVerification = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Verification email sent successfully',
+      message: "Verification email sent successfully",
     });
   } catch (error) {
     logger.error(`Resend verification error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to resend verification email',
+      message: "Failed to resend verification email",
       error: error.message,
     });
   }
@@ -253,7 +253,7 @@ exports.forgotPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: "User not found",
       });
     }
 
@@ -262,8 +262,8 @@ exports.forgotPassword = async (req, res) => {
 
     await sendEmail({
       to: user.email,
-      subject: 'Password Reset - SkillsProcket',
-      template: 'passwordReset',
+      subject: "Password Reset - skillspocket",
+      template: "passwordReset",
       data: {
         name: user.firstName,
         otp: resetToken,
@@ -272,13 +272,13 @@ exports.forgotPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Password reset code sent to your email',
+      message: "Password reset code sent to your email",
     });
   } catch (error) {
     logger.error(`Forgot password error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to send reset code',
+      message: "Failed to send reset code",
       error: error.message,
     });
   }
@@ -295,12 +295,12 @@ exports.resetPassword = async (req, res) => {
       email,
       resetPasswordToken: otp,
       resetPasswordExpire: { $gt: Date.now() },
-    }).select('+password');
+    }).select("+password");
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired reset code',
+        message: "Invalid or expired reset code",
       });
     }
 
@@ -311,13 +311,13 @@ exports.resetPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Password reset successful',
+      message: "Password reset successful",
     });
   } catch (error) {
     logger.error(`Reset password error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Password reset failed',
+      message: "Password reset failed",
       error: error.message,
     });
   }
@@ -330,16 +330,16 @@ exports.logout = async (req, res) => {
   try {
     // In a stateless JWT system, logout is handled client-side
     // Optionally, you can blacklist the token in Redis
-    
+
     res.status(200).json({
       success: true,
-      message: 'Logged out successfully',
+      message: "Logged out successfully",
     });
   } catch (error) {
     logger.error(`Logout error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Logout failed',
+      message: "Logout failed",
       error: error.message,
     });
   }
@@ -360,7 +360,7 @@ exports.getMe = async (req, res) => {
     logger.error(`Get current user error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch user data',
+      message: "Failed to fetch user data",
       error: error.message,
     });
   }

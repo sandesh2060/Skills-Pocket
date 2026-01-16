@@ -1,10 +1,10 @@
 // ============================================
 // FILE: backend/user/src/controllers/messageController.js
 // ============================================
-const { Message, Conversation } = require('../models/Message');
-const { uploadToCloudinary } = require('../config/cloudinary');
-const logger = require('../utils/logger');
-const fs = require('fs');
+const { Message, Conversation } = require("../models/Message");
+const { uploadToCloudinary } = require("../config/cloudinary");
+const logger = require("../utils/logger");
+const fs = require("fs");
 
 // @desc    Send message
 // @route   POST /api/messages
@@ -49,7 +49,7 @@ exports.sendMessage = async (req, res) => {
     };
     await conversation.save();
 
-    await message.populate('sender', 'firstName lastName profilePicture');
+    await message.populate("sender", "firstName lastName profilePicture");
 
     res.status(201).json({
       success: true,
@@ -59,7 +59,7 @@ exports.sendMessage = async (req, res) => {
     logger.error(`Send message error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to send message',
+      message: "Failed to send message",
       error: error.message,
     });
   }
@@ -73,8 +73,8 @@ exports.getConversations = async (req, res) => {
     const conversations = await Conversation.find({
       participants: req.user.id,
     })
-      .populate('participants', 'firstName lastName profilePicture')
-      .populate('lastMessage.sender', 'firstName lastName')
+      .populate("participants", "firstName lastName profilePicture")
+      .populate("lastMessage.sender", "firstName lastName")
       .sort({ updatedAt: -1 });
 
     res.status(200).json({
@@ -85,7 +85,7 @@ exports.getConversations = async (req, res) => {
     logger.error(`Get conversations error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch conversations',
+      message: "Failed to fetch conversations",
       error: error.message,
     });
   }
@@ -104,13 +104,13 @@ exports.getConversationMessages = async (req, res) => {
     if (!conversation.participants.includes(req.user.id)) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to view this conversation',
+        message: "Not authorized to view this conversation",
       });
     }
 
     const [messages, total] = await Promise.all([
       Message.find({ conversation: req.params.conversationId })
-        .populate('sender', 'firstName lastName profilePicture')
+        .populate("sender", "firstName lastName profilePicture")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit)),
@@ -132,7 +132,7 @@ exports.getConversationMessages = async (req, res) => {
     logger.error(`Get conversation messages error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch messages',
+      message: "Failed to fetch messages",
       error: error.message,
     });
   }
@@ -162,13 +162,13 @@ exports.markAsRead = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Messages marked as read',
+      message: "Messages marked as read",
     });
   } catch (error) {
     logger.error(`Mark as read error: ${error.message}`);
     res.status(500).json({
       success: false,
-      message: 'Failed to mark messages as read',
+      message: "Failed to mark messages as read",
       error: error.message,
     });
   }
@@ -182,11 +182,11 @@ exports.uploadFile = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'Please upload a file',
+        message: "Please upload a file",
       });
     }
 
-    const result = await uploadToCloudinary(req.file, 'skillsprocket/messages');
+    const result = await uploadToCloudinary(req.file, "skillspocket/messages");
     fs.unlinkSync(req.file.path);
 
     res.status(200).json({
@@ -204,7 +204,7 @@ exports.uploadFile = async (req, res) => {
     if (req.file) fs.unlinkSync(req.file.path);
     res.status(500).json({
       success: false,
-      message: 'Failed to upload file',
+      message: "Failed to upload file",
       error: error.message,
     });
   }

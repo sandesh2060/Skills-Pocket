@@ -1,4 +1,4 @@
-# 🚀 SkillsProcket – Premium Freelancing Marketplace
+# 🚀 skillspocket – Premium Freelancing Marketplace
 
 ## Folder structure :
 
@@ -245,7 +245,7 @@ Skillpocket/
 └── docker-compose.yml
 
 <div align="center">
-  <img src="https://your-logo-url.com/logo.png" alt="SkillsProcket Logo" width="120" />
+  <img src="https://your-logo-url.com/logo.png" alt="skillspocket Logo" width="120" />
   <h2>A modern, premium freelancing marketplace connecting top talent with global clients</h2>
   <a href="#live-demo">Live Demo</a> • <a href="#documentation">Documentation</a> • <a href="#contributing">Contribute</a> • <a href="#support">Support</a>
 </div>
@@ -253,7 +253,7 @@ Skillpocket/
 ---
 
 <div align="center">
-  <img src="https://your-logo-url.com/logo.png" alt="SkillsProcket Logo" width="120" />
+  <img src="https://your-logo-url.com/logo.png" alt="skillspocket Logo" width="120" />
   <h2>A modern, premium freelancing marketplace connecting top talent with global clients</h2>
   <a href="#live-demo">Live Demo</a> • <a href="#documentation">Documentation</a> • <a href="#contributing">Contribute</a> • <a href="#support">Support</a>
 </div>
@@ -262,13 +262,13 @@ Skillpocket/
 
 ## 📌 Overview
 
-**SkillsProcket** is a full-stack freelancing marketplace inspired by platforms like Upwork, Fiverr, and Freelancer. It features a premium UI, modern animations, and scalable architecture.
+**skillspocket** is a full-stack freelancing marketplace inspired by platforms like Upwork, Fiverr, and Freelancer. It features a premium UI, modern animations, and scalable architecture.
 
 Clients can post projects, hire freelancers, manage milestones, and make secure payments. Freelancers can build professional profiles, submit proposals, communicate in real time, and track earnings.
 
 ---
 
-## ✨ What Makes SkillsProcket Different?
+## ✨ What Makes skillspocket Different?
 
 - **Premium, clean & modern UI**
 - **Skeleton loaders** for seamless loading experience
@@ -382,7 +382,7 @@ Accessible motion (no excessive animation)
 ## 📁 Project Structure
 
 ```text
-skillsprocket/
+skillspocket/
 │
 ├── frontend/
 │   ├── user/
@@ -434,8 +434,8 @@ skillsprocket/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/skillsprocket.git
-cd skillsprocket
+git clone https://github.com/yourusername/skillspocket.git
+cd skillspocket
 
 # Backend
 cd backend/user
@@ -466,7 +466,7 @@ npm run dev
 
 ```
 Development: http://localhost:5000/api
-Production: https://api.skillsprocket.com/api
+Production: https://api.skillspocket.com/api
 ```
 
 ## Authentication
@@ -1060,10 +1060,10 @@ Authorization: Bearer <your_jwt_token>
   "__export_source": "insomnia.desktop.app:v2023.5.8",
   "resources": [
     {
-      "_id": "wrk_skillsprocket",
+      "_id": "wrk_skillspocket",
       "_type": "workspace",
-      "name": "SkillsProcket API",
-      "description": "Complete API collection for SkillsProcket freelancing marketplace"
+      "name": "skillspocket API",
+      "description": "Complete API collection for skillspocket freelancing marketplace"
     },
     {
       "_id": "env_base",
@@ -1092,7 +1092,7 @@ Authorization: Bearer <your_jwt_token>
       "_type": "environment",
       "name": "Production",
       "data": {
-        "base_url": "https://api.skillsprocket.com/api"
+        "base_url": "https://api.skillspocket.com/api"
       }
     },
     {
@@ -1838,7 +1838,7 @@ Authorization: Bearer <your_jwt_token>
       ],
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"email\": \"admin@skillsprocket.com\",\n  \"password\": \"AdminPassword123!\"\n}"
+        "text": "{\n  \"email\": \"admin@skillspocket.com\",\n  \"password\": \"AdminPassword123!\"\n}"
       }
     },
     {
@@ -2165,24 +2165,13 @@ This project follows a token-based Tailwind design system to ensure consistency 
 
 For questions, feedback, or support, please open an issue or contact the maintainer at [sharmasandesh66@gmail.com].
 
-
-
-
-
-
-
-
-
-
-
-
-
 // ============================================
 // FILE: backend/user/README.md
 // ============================================
-# SkillsProcket Backend API
 
-Backend API for the SkillsProcket freelancing marketplace platform.
+# skillspocket Backend API
+
+Backend API for the skillspocket freelancing marketplace platform.
 
 ## Features
 
@@ -2211,16 +2200,19 @@ Backend API for the SkillsProcket freelancing marketplace platform.
 
 1. Clone the repository
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Copy `.env.example` to `.env` and configure your environment variables:
+
 ```bash
 cp .env.example .env
 ```
 
 4. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -2230,6 +2222,7 @@ npm run dev
 See `.env.example` for all required environment variables.
 
 Key variables:
+
 - `MONGO_URI`: MongoDB connection string
 - `JWT_SECRET`: Secret key for JWT tokens
 - `CLOUDINARY_*`: Cloudinary credentials
@@ -2241,6 +2234,7 @@ Key variables:
 Base URL: `http://localhost:5000/api`
 
 ### Authentication
+
 - POST `/auth/register` - Register new user
 - POST `/auth/login` - Login user
 - POST `/auth/verify-email` - Verify email with OTP
@@ -2248,11 +2242,13 @@ Base URL: `http://localhost:5000/api`
 - POST `/auth/reset-password` - Reset password
 
 ### Users
+
 - GET `/users/:id` - Get user profile
 - PUT `/users/me` - Update own profile
 - POST `/users/upload-profile-picture` - Upload profile picture
 
 ### Jobs
+
 - GET `/jobs` - Get all jobs (with filters)
 - GET `/jobs/:id` - Get job by ID
 - POST `/jobs` - Create new job (client only)
@@ -2260,6 +2256,7 @@ Base URL: `http://localhost:5000/api`
 - DELETE `/jobs/:id` - Delete job
 
 ### Proposals
+
 - POST `/proposals` - Submit proposal (freelancer only)
 - GET `/proposals/my-proposals` - Get own proposals
 - GET `/proposals/job/:jobId` - Get proposals for job (client only)
@@ -2267,12 +2264,14 @@ Base URL: `http://localhost:5000/api`
 - PUT `/proposals/:id/reject` - Reject proposal
 
 ### Messages
+
 - GET `/messages/conversations` - Get all conversations
 - GET `/messages/conversation/:id` - Get messages in conversation
 - POST `/messages` - Send message
 - PUT `/messages/conversation/:id/read` - Mark as read
 
 ### Transactions
+
 - GET `/transactions/wallet` - Get wallet balance
 - GET `/transactions` - Get transaction history
 - POST `/transactions/payment-intent` - Create payment intent
@@ -2280,6 +2279,7 @@ Base URL: `http://localhost:5000/api`
 - POST `/transactions/withdraw` - Request withdrawal
 
 ### Reviews
+
 - POST `/reviews` - Create review
 - GET `/reviews/user/:userId` - Get user reviews
 - GET `/reviews/job/:jobId` - Get job reviews
@@ -2342,11 +2342,13 @@ The API uses consistent error response format:
 The API supports real-time features via Socket.io:
 
 ### Client → Server
+
 - `send_message` - Send a message
 - `typing` - User is typing
 - `stop_typing` - User stopped typing
 
 ### Server → Client
+
 - `new_message` - New message received
 - `user_typing` - Another user is typing
 - `notification` - New notification
@@ -2362,3 +2364,256 @@ The API supports real-time features via Socket.io:
 ## License
 
 MIT
+
+## for admin backend
+
+// ============================================
+// FILE: backend/admin/README.md
+// ============================================
+
+# skillspocket Admin Backend
+
+Admin panel backend API for managing the skillspocket platform.
+
+## Features
+
+- Admin authentication with role-based access
+- User management (suspend, verify, delete)
+- Job management (feature, delete)
+- Dispute resolution system
+- Platform analytics and reporting
+- Financial monitoring
+- Activity logging
+
+## Installation
+
+```bash
+cd backend/admin
+npm install
+cp .env.example .env
+# Configure your .env file
+npm run dev
+```
+
+## API Endpoints
+
+### Authentication
+
+- POST `/api/admin/auth/login` - Admin login
+- GET `/api/admin/auth/me` - Get current admin
+- POST `/api/admin/auth/logout` - Logout
+- PUT `/api/admin/auth/change-password` - Change password
+
+### User Management
+
+- GET `/api/admin/users` - Get all users
+- GET `/api/admin/users/:userId` - Get user details
+- PUT `/api/admin/users/:userId/suspend` - Suspend/unsuspend user
+- PUT `/api/admin/users/:userId/verify` - Verify user
+- DELETE `/api/admin/users/:userId` - Delete user
+
+### Job Management
+
+- GET `/api/admin/jobs` - Get all jobs
+- DELETE `/api/admin/jobs/:jobId` - Delete job
+- PUT `/api/admin/jobs/:jobId/feature` - Feature/unfeature job
+
+### Disputes
+
+- GET `/api/admin/disputes` - Get all disputes
+- GET `/api/admin/disputes/:disputeId` - Get dispute details
+- PUT `/api/admin/disputes/:disputeId/assign` - Assign dispute
+- PUT `/api/admin/disputes/:disputeId/resolve` - Resolve dispute
+- POST `/api/admin/disputes/:disputeId/messages` - Add message
+
+### Analytics
+
+- GET `/api/admin/analytics` - Get platform analytics
+- GET `/api/admin/analytics/financial` - Get financial analytics
+
+## Admin Roles & Permissions
+
+### Super Admin
+
+- Full access to all features
+- Can manage other admins
+- Can delete users permanently
+
+### Admin
+
+- Manage users (suspend, verify)
+- Manage jobs
+- View analytics
+- Resolve disputes
+
+### Moderator
+
+- Manage jobs
+- Resolve disputes
+- Limited user management
+
+## Security
+
+- JWT authentication
+- Role-based access control
+- Account lockout after failed attempts
+- Password hashing with bcrypt
+- Input validation and sanitization
+- Rate limiting
+- Helmet security headers
+
+## License
+
+MIT
+
+Complete Admin Backend Fix
+Problem
+The admin backend was trying to import models from the user backend using relative paths like ../../user/src/models/User, which caused MODULE_NOT_FOUND errors.
+Solution
+Create all necessary models in the admin backend that connect to the same MongoDB database.
+
+Files to Create/Update
+📁 Models Directory: backend/admin/src/models/
+Create these 6 model files:
+
+✅ User.js - User model
+✅ Job.js - Job model
+✅ Proposal.js - Proposal model
+✅ Transaction.js - Transaction model
+✅ Admin.js - Admin model (NEW)
+✅ Dispute.js - Dispute model (NEW)
+
+📁 Controllers Directory: backend/admin/src/controllers/
+Update these 3 controller files (changed imports from ../../user/src/models/ to ../models/):
+
+✅ userManagementController.js - UPDATED
+✅ jobManagementController.js - UPDATED
+✅ disputeController.js - UPDATED
+✅ analyticsController.js - UPDATED
+✅ adminAuthController.js - Already correct (no changes needed)
+
+📁 Utils Directory: backend/admin/src/utils/
+
+✅ logger.js - Winston logger utility (NEW)
+
+Installation Steps
+Step 1: Install Dependencies
+bashcd backend/admin
+npm install winston bcryptjs jsonwebtoken
+Step 2: Create Directory Structure
+bashmkdir -p src/models src/utils logs
+Step 3: Copy All Files
+Copy the code from all the artifacts I provided above into the corresponding files in your admin backend.
+Models to create:
+
+backend/admin/src/models/User.js
+backend/admin/src/models/Job.js
+backend/admin/src/models/Proposal.js
+backend/admin/src/models/Transaction.js
+backend/admin/src/models/Admin.js
+backend/admin/src/models/Dispute.js
+
+Utils to create:
+
+backend/admin/src/utils/logger.js
+
+Controllers to update:
+
+backend/admin/src/controllers/userManagementController.js
+backend/admin/src/controllers/jobManagementController.js
+backend/admin/src/controllers/disputeController.js
+backend/admin/src/controllers/analyticsController.js
+
+Step 4: Verify Your .env File
+Make sure your backend/admin/.env has:
+env# MongoDB - SAME database as user backend
+MONGO_URI=mongodb://localhost:27017/skillspocket
+
+# JWT
+
+JWT_SECRET=your_jwt_secret_key_here
+JWT_EXPIRE=7d
+
+# Server
+
+NODE_ENV=development
+PORT=5001
+
+# Logging
+
+LOG_LEVEL=info
+Step 5: Start the Server
+bashnpm run dev
+
+Expected Directory Structure
+backend/admin/
+├── src/
+│ ├── models/
+│ │ ├── User.js ✓ CREATED
+│ │ ├── Job.js ✓ CREATED
+│ │ ├── Proposal.js ✓ CREATED
+│ │ ├── Transaction.js ✓ CREATED
+│ │ ├── Admin.js ✓ CREATED
+│ │ └── Dispute.js ✓ CREATED
+│ ├── controllers/
+│ │ ├── adminAuthController.js ✓ OK
+│ │ ├── userManagementController.js ✓ UPDATED
+│ │ ├── jobManagementController.js ✓ UPDATED
+│ │ ├── disputeController.js ✓ UPDATED
+│ │ └── analyticsController.js ✓ UPDATED
+│ ├── utils/
+│ │ └── logger.js ✓ CREATED
+│ ├── routes/
+│ ├── middlewares/
+│ ├── app.js
+│ └── server.js
+├── logs/ ✓ CREATED
+├── .env
+└── package.json
+
+What Changed?
+Before (WRONG):
+javascriptconst User = require('../../user/src/models/User'); // ❌ Cross-backend import
+const Job = require('../../user/src/models/Job'); // ❌ Won't work
+After (CORRECT):
+javascriptconst User = require('../models/User'); // ✅ Local model
+const Job = require('../models/Job'); // ✅ Works perfectly
+const logger = require('../utils/logger'); // ✅ Added logger
+
+Key Points
+
+Same Database: Both user and admin backends connect to the same MongoDB database (skillspocket)
+Independent Services: Each backend has its own models but shares the same database
+Proper Architecture: This follows microservices best practices
+No Cross-Dependencies: Admin backend doesn't depend on user backend files
+
+Testing After Fix
+Once the server starts successfully, test these endpoints:
+Admin Auth
+bash# Login
+POST http://localhost:5001/api/admin/auth/login
+User Management
+bash# Get all users
+GET http://localhost:5001/api/admin/users
+Job Management
+bash# Get all jobs
+GET http://localhost:5001/api/admin/jobs
+Analytics
+bash# Get platform analytics
+GET http://localhost:5001/api/admin/analytics
+
+Troubleshooting
+If you still get errors:
+
+"Cannot find module" → Make sure all model files exist in src/models/
+"winston not found" → Run npm install winston
+"bcryptjs not found" → Run npm install bcryptjs jsonwebtoken
+Database connection error → Check MONGO_URI in .env
+Port already in use → Change PORT in .env or stop other services
+
+Success Indicator
+You should see:
+[nodemon] starting `node src/server.js`
+✓ MongoDB connected
+✓ Admin server running on port 5001
+If you see these messages without any MODULE_NOT_FOUND errors, you're all set! 🎉
