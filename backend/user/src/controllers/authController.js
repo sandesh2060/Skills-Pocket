@@ -1,0 +1,367 @@
+// ============================================
+// FILE: backend/user/src/controllers/authController.js
+// ============================================
+const User = require('../models/User');
+const { sendEmail } = require('../services/emailService');
+const logger = require('../utils/logger');
+const { generateOTP } = require('../utils/helpers');
+
+// @desc    Register user
+// @route   POST /api/auth/register
+// @access  Public
+exports.register = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password, role, phone } = req.body;
+
+    // Check if user exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(409).json({
+        success: false,
+        message: 'User with this email already exists',
+      });
+    }
+
+    // Create user
+    const user = await User.create({
+      firstName,
+      lastName,
+      email,
+      password,
+      role,
+      phone,
+    });
+
+    // Generate verification token
+    const verificationToken = user.generateVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    // Send verification email
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Email Verification - SkillsProcket',
+        template: 'emailVerification',
+        data: {
+          name: user.firstName,
+          otp: verificationToken,
+        },
+      });
+    } catch (emailError) {
+      logger.error(`Email sending failed: ${emailError.message}`);
+    }
+
+    // Generate JWT token
+    const token = user.generateToken();
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful. Please verify your email.',
+      data: {
+        user: {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          isVerified: user.isVerified,
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    logger.error(`Registration error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Registration failed',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Login user
+// @route   POST /api/auth/login
+// @access  Public
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and password',
+      });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials',
+      });
+    }
+
+    // Check if account is suspended
+    if (user.isSuspended) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been suspended',
+        reason: user.suspensionReason,
+      });
+    }
+
+    // Check password
+    const isPasswordMatch = await user.comparePassword(password);
+    if (!isPasswordMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials',
+      });
+    }
+
+    // Update last login
+    user.lastLogin = Date.now();
+    await user.save({ validateBeforeSave: false });
+
+    // Generate token
+    const token = user.generateToken();
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          isVerified: user.isVerified,
+          profilePicture: user.profilePicture,
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    logger.error(`Login error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Login failed',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Verify email
+// @route   POST /api/auth/verify-email
+// @access  Public
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({
+      email,
+      emailVerificationToken: otp,
+      emailVerificationExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification code',
+      });
+    }
+
+    user.isVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully',
+    });
+  } catch (error) {
+    logger.error(`Email verification error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Email verification failed',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Resend verification email
+// @route   POST /api/auth/resend-verification
+// @access  Public
+exports.resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already verified',
+      });
+    }
+
+    const verificationToken = user.generateVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    await sendEmail({
+      to: user.email,
+      subject: 'Email Verification - SkillsProcket',
+      template: 'emailVerification',
+      data: {
+        name: user.firstName,
+        otp: verificationToken,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Verification email sent successfully',
+    });
+  } catch (error) {
+    logger.error(`Resend verification error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resend verification email',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Forgot password
+// @route   POST /api/auth/forgot-password
+// @access  Public
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const resetToken = user.generateResetToken();
+    await user.save({ validateBeforeSave: false });
+
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset - SkillsProcket',
+      template: 'passwordReset',
+      data: {
+        name: user.firstName,
+        otp: resetToken,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset code sent to your email',
+    });
+  } catch (error) {
+    logger.error(`Forgot password error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send reset code',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    const user = await User.findOne({
+      email,
+      resetPasswordToken: otp,
+      resetPasswordExpire: { $gt: Date.now() },
+    }).select('+password');
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset code',
+      });
+    }
+
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successful',
+    });
+  } catch (error) {
+    logger.error(`Reset password error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Password reset failed',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Private
+exports.logout = async (req, res) => {
+  try {
+    // In a stateless JWT system, logout is handled client-side
+    // Optionally, you can blacklist the token in Redis
+    
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    logger.error(`Logout error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Logout failed',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get current user
+// @route   GET /api/auth/me
+// @access  Private
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    logger.error(`Get current user error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user data',
+      error: error.message,
+    });
+  }
+};

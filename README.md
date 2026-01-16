@@ -1,5 +1,249 @@
 # 🚀 SkillsProcket – Premium Freelancing Marketplace
 
+## Folder structure :
+
+Skillpocket/
+├── frontend/
+│ ├── user/
+│ │ ├── public/
+│ │ │ ├── index.html
+│ │ │ ├── favicon.ico
+│ │ │ └── assets/
+│ │ │ └── images/
+│ │ ├── src/
+│ │ │ ├── api/
+│ │ │ │ ├── axios.js
+│ │ │ │ ├── authApi.js
+│ │ │ │ ├── jobApi.js
+│ │ │ │ ├── profileApi.js
+│ │ │ │ └── messageApi.js
+│ │ │ ├── components/
+│ │ │ │ ├── common/
+│ │ │ │ │ ├── Header.jsx
+│ │ │ │ │ ├── Footer.jsx
+│ │ │ │ │ ├── Button.jsx
+│ │ │ │ │ ├── Input.jsx
+│ │ │ │ │ ├── Modal.jsx
+│ │ │ │ │ ├── Skeleton.jsx
+│ │ │ │ │ ├── Loader.jsx
+│ │ │ │ │ └── ProtectedRoute.jsx
+│ │ │ │ ├── auth/
+│ │ │ │ │ ├── LoginForm.jsx
+│ │ │ │ │ ├── SignupForm.jsx
+│ │ │ │ │ ├── SocialLogin.jsx
+│ │ │ │ │ └── RoleToggle.jsx
+│ │ │ │ ├── home/
+│ │ │ │ │ ├── HeroSection.jsx
+│ │ │ │ │ ├── ServicesSection.jsx
+│ │ │ │ │ ├── FeaturedFreelancers.jsx
+│ │ │ │ │ ├── HowItWorks.jsx
+│ │ │ │ │ ├── StatsSection.jsx
+│ │ │ │ │ └── TestimonialSection.jsx
+│ │ │ │ ├── dashboard/
+│ │ │ │ │ ├── freelancer/
+│ │ │ │ │ │ ├── DashboardStats.jsx
+│ │ │ │ │ │ ├── ActiveProposals.jsx
+│ │ │ │ │ │ ├── EarningsChart.jsx
+│ │ │ │ │ │ └── ProfileCompletion.jsx
+│ │ │ │ │ └── client/
+│ │ │ │ │ ├── ClientStats.jsx
+│ │ │ │ │ ├── ActiveProjects.jsx
+│ │ │ │ │ ├── ProjectTimeline.jsx
+│ │ │ │ │ └── NewProposals.jsx
+│ │ │ │ ├── jobs/
+│ │ │ │ │ ├── JobCard.jsx
+│ │ │ │ │ ├── JobFilters.jsx
+│ │ │ │ │ ├── JobSearch.jsx
+│ │ │ │ │ └── JobDetails.jsx
+│ │ │ │ ├── profile/
+│ │ │ │ │ ├── ProfileHeader.jsx
+│ │ │ │ │ ├── SkillsSection.jsx
+│ │ │ │ │ ├── PortfolioGallery.jsx
+│ │ │ │ │ └── ReviewsList.jsx
+│ │ │ │ ├── messaging/
+│ │ │ │ │ ├── ConversationList.jsx
+│ │ │ │ │ ├── MessageThread.jsx
+│ │ │ │ │ ├── MessageInput.jsx
+│ │ │ │ │ └── FileAttachment.jsx
+│ │ │ │ └── wallet/
+│ │ │ │ ├── WalletStats.jsx
+│ │ │ │ ├── TransactionTable.jsx
+│ │ │ │ └── WithdrawModal.jsx
+│ │ │ ├── pages/
+│ │ │ │ ├── Home.jsx
+│ │ │ │ ├── Login.jsx
+│ │ │ │ ├── Signup.jsx
+│ │ │ │ ├── FreelancerDashboard.jsx
+│ │ │ │ ├── ClientDashboard.jsx
+│ │ │ │ ├── JobSearch.jsx
+│ │ │ │ ├── JobDetails.jsx
+│ │ │ │ ├── Profile.jsx
+│ │ │ │ ├── Messages.jsx
+│ │ │ │ ├── Wallet.jsx
+│ │ │ │ ├── Settings.jsx
+│ │ │ │ └── NotFound.jsx
+│ │ │ ├── hooks/
+│ │ │ │ ├── useAuth.js
+│ │ │ │ ├── useJobs.js
+│ │ │ │ ├── useProfile.js
+│ │ │ │ ├── useMessages.js
+│ │ │ │ ├── useWallet.js
+│ │ │ │ └── useDebounce.js
+│ │ │ ├── context/
+│ │ │ │ ├── AuthContext.jsx
+│ │ │ │ ├── ThemeContext.jsx
+│ │ │ │ └── NotificationContext.jsx
+│ │ │ ├── utils/
+│ │ │ │ ├── helpers.js
+│ │ │ │ ├── validators.js
+│ │ │ │ ├── constants.js
+│ │ │ │ └── formatters.js
+│ │ │ ├── styles/
+│ │ │ │ ├── index.css
+│ │ │ │ └── animations.css
+│ │ │ ├── assets/
+│ │ │ │ ├── images/
+│ │ │ │ ├── icons/
+│ │ │ │ └── fonts/
+│ │ │ ├── App.jsx
+│ │ │ ├── main.jsx
+│ │ │ └── routes.jsx
+│ │ ├── .env
+│ │ ├── .env.example
+│ │ ├── package.json
+│ │ ├── tailwind.config.js
+│ │ ├── postcss.config.js
+│ │ ├── vite.config.js
+│ │ └── .gitignore
+│ │
+│ └── admin/
+│ ├── public/
+│ ├── src/
+│ │ ├── api/
+│ │ ├── components/
+│ │ │ ├── common/
+│ │ │ ├── dashboard/
+│ │ │ ├── users/
+│ │ │ ├── jobs/
+│ │ │ ├── disputes/
+│ │ │ └── analytics/
+│ │ ├── pages/
+│ │ │ ├── AdminDashboard.jsx
+│ │ │ ├── UserManagement.jsx
+│ │ │ ├── JobManagement.jsx
+│ │ │ ├── DisputeResolution.jsx
+│ │ │ ├── FinancialMonitoring.jsx
+│ │ │ └── Settings.jsx
+│ │ ├── hooks/
+│ │ ├── context/
+│ │ ├── utils/
+│ │ ├── styles/
+│ │ ├── App.jsx
+│ │ └── main.jsx
+│ ├── .env
+│ ├── package.json
+│ ├── tailwind.config.js
+│ └── vite.config.js
+│
+├── backend/
+│ ├── user/
+│ │ ├── src/
+│ │ │ ├── config/
+│ │ │ │ ├── database.js
+│ │ │ │ ├── cloudinary.js
+│ │ │ │ ├── redis.js
+│ │ │ │ └── env.js
+│ │ │ ├── models/
+│ │ │ │ ├── User.js
+│ │ │ │ ├── Job.js
+│ │ │ │ ├── Proposal.js
+│ │ │ │ ├── Message.js
+│ │ │ │ ├── Transaction.js
+│ │ │ │ ├── Review.js
+│ │ │ │ └── Notification.js
+│ │ │ ├── controllers/
+│ │ │ │ ├── authController.js
+│ │ │ │ ├── userController.js
+│ │ │ │ ├── jobController.js
+│ │ │ │ ├── proposalController.js
+│ │ │ │ ├── messageController.js
+│ │ │ │ ├── transactionController.js
+│ │ │ │ └── reviewController.js
+│ │ │ ├── routes/
+│ │ │ │ ├── authRoutes.js
+│ │ │ │ ├── userRoutes.js
+│ │ │ │ ├── jobRoutes.js
+│ │ │ │ ├── proposalRoutes.js
+│ │ │ │ ├── messageRoutes.js
+│ │ │ │ ├── transactionRoutes.js
+│ │ │ │ └── reviewRoutes.js
+│ │ │ ├── middlewares/
+│ │ │ │ ├── authMiddleware.js
+│ │ │ │ ├── errorHandler.js
+│ │ │ │ ├── validator.js
+│ │ │ │ ├── upload.js
+│ │ │ │ └── rateLimiter.js
+│ │ │ ├── services/
+│ │ │ │ ├── emailService.js
+│ │ │ │ ├── paymentService.js
+│ │ │ │ ├── notificationService.js
+│ │ │ │ └── socketService.js
+│ │ │ ├── utils/
+│ │ │ │ ├── helpers.js
+│ │ │ │ ├── validators.js
+│ │ │ │ ├── constants.js
+│ │ │ │ └── logger.js
+│ │ │ ├── socket/
+│ │ │ │ ├── index.js
+│ │ │ │ ├── messageHandler.js
+│ │ │ │ └── notificationHandler.js
+│ │ │ ├── app.js
+│ │ │ └── server.js
+│ │ ├── uploads/
+│ │ ├── logs/
+│ │ ├── .env
+│ │ ├── .env.example
+│ │ ├── package.json
+│ │ └── .gitignore
+│ │
+│ └── admin/
+│ ├── src/
+│ │ ├── config/
+│ │ ├── models/
+│ │ │ └── Admin.js
+│ │ ├── controllers/
+│ │ │ ├── adminAuthController.js
+│ │ │ ├── userManagementController.js
+│ │ │ ├── jobManagementController.js
+│ │ │ ├── disputeController.js
+│ │ │ └── analyticsController.js
+│ │ ├── routes/
+│ │ │ ├── adminAuthRoutes.js
+│ │ │ ├── userManagementRoutes.js
+│ │ │ ├── jobManagementRoutes.js
+│ │ │ ├── disputeRoutes.js
+│ │ │ └── analyticsRoutes.js
+│ │ ├── middlewares/
+│ │ │ └── adminAuth.js
+│ │ ├── services/
+│ │ ├── utils/
+│ │ ├── app.js
+│ │ └── server.js
+│ ├── .env
+│ ├── package.json
+│ └── .gitignore
+│
+├── shared/
+│ ├── constants/
+│ │ ├── roles.js
+│ │ ├── status.js
+│ │ └── errors.js
+│ └── types/
+│
+├── .gitignore
+├── README.md
+└── docker-compose.yml
+
 <div align="center">
   <img src="https://your-logo-url.com/logo.png" alt="SkillsProcket Logo" width="120" />
   <h2>A modern, premium freelancing marketplace connecting top talent with global clients</h2>
@@ -1920,3 +2164,201 @@ This project follows a token-based Tailwind design system to ensure consistency 
 ## 📞 Contact
 
 For questions, feedback, or support, please open an issue or contact the maintainer at [sharmasandesh66@gmail.com].
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ============================================
+// FILE: backend/user/README.md
+// ============================================
+# SkillsProcket Backend API
+
+Backend API for the SkillsProcket freelancing marketplace platform.
+
+## Features
+
+- User authentication and authorization
+- Job posting and management
+- Proposal submission and management
+- Real-time messaging with Socket.io
+- Payment processing with Stripe
+- File uploads with Cloudinary
+- Email notifications
+- Transaction management
+- Review and rating system
+
+## Tech Stack
+
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB with Mongoose
+- **Authentication**: JWT
+- **Real-time**: Socket.io
+- **Payment**: Stripe
+- **Storage**: Cloudinary
+- **Email**: Nodemailer
+
+## Installation
+
+1. Clone the repository
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Copy `.env.example` to `.env` and configure your environment variables:
+```bash
+cp .env.example .env
+```
+
+4. Start the development server:
+```bash
+npm run dev
+```
+
+## Environment Variables
+
+See `.env.example` for all required environment variables.
+
+Key variables:
+- `MONGO_URI`: MongoDB connection string
+- `JWT_SECRET`: Secret key for JWT tokens
+- `CLOUDINARY_*`: Cloudinary credentials
+- `STRIPE_SECRET_KEY`: Stripe secret key
+- `EMAIL_*`: Email service configuration
+
+## API Documentation
+
+Base URL: `http://localhost:5000/api`
+
+### Authentication
+- POST `/auth/register` - Register new user
+- POST `/auth/login` - Login user
+- POST `/auth/verify-email` - Verify email with OTP
+- POST `/auth/forgot-password` - Request password reset
+- POST `/auth/reset-password` - Reset password
+
+### Users
+- GET `/users/:id` - Get user profile
+- PUT `/users/me` - Update own profile
+- POST `/users/upload-profile-picture` - Upload profile picture
+
+### Jobs
+- GET `/jobs` - Get all jobs (with filters)
+- GET `/jobs/:id` - Get job by ID
+- POST `/jobs` - Create new job (client only)
+- PUT `/jobs/:id` - Update job
+- DELETE `/jobs/:id` - Delete job
+
+### Proposals
+- POST `/proposals` - Submit proposal (freelancer only)
+- GET `/proposals/my-proposals` - Get own proposals
+- GET `/proposals/job/:jobId` - Get proposals for job (client only)
+- PUT `/proposals/:id/accept` - Accept proposal
+- PUT `/proposals/:id/reject` - Reject proposal
+
+### Messages
+- GET `/messages/conversations` - Get all conversations
+- GET `/messages/conversation/:id` - Get messages in conversation
+- POST `/messages` - Send message
+- PUT `/messages/conversation/:id/read` - Mark as read
+
+### Transactions
+- GET `/transactions/wallet` - Get wallet balance
+- GET `/transactions` - Get transaction history
+- POST `/transactions/payment-intent` - Create payment intent
+- POST `/transactions/release` - Release payment
+- POST `/transactions/withdraw` - Request withdrawal
+
+### Reviews
+- POST `/reviews` - Create review
+- GET `/reviews/user/:userId` - Get user reviews
+- GET `/reviews/job/:jobId` - Get job reviews
+
+## Project Structure
+
+```
+backend/user/
+├── src/
+│   ├── config/          # Configuration files
+│   ├── controllers/     # Route controllers
+│   ├── models/          # Database models
+│   ├── routes/          # API routes
+│   ├── middlewares/     # Custom middlewares
+│   ├── services/        # Business logic services
+│   ├── socket/          # Socket.io handlers
+│   ├── utils/           # Utility functions
+│   ├── app.js           # Express app setup
+│   └── server.js        # Server entry point
+├── uploads/             # Temporary file uploads
+├── logs/                # Application logs
+├── .env                 # Environment variables
+├── .gitignore
+├── package.json
+└── README.md
+```
+
+## Scripts
+
+- `npm start` - Start production server
+- `npm run dev` - Start development server with nodemon
+- `npm test` - Run tests
+- `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
+
+## Security Features
+
+- JWT authentication
+- Password hashing with bcrypt
+- Input validation and sanitization
+- Rate limiting
+- Helmet security headers
+- CORS configuration
+- MongoDB injection prevention
+
+## Error Handling
+
+The API uses consistent error response format:
+
+```json
+{
+  "success": false,
+  "message": "Error message",
+  "error": "Detailed error (development only)"
+}
+```
+
+## WebSocket Events
+
+The API supports real-time features via Socket.io:
+
+### Client → Server
+- `send_message` - Send a message
+- `typing` - User is typing
+- `stop_typing` - User stopped typing
+
+### Server → Client
+- `new_message` - New message received
+- `user_typing` - Another user is typing
+- `notification` - New notification
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+MIT
