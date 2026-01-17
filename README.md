@@ -244,6 +244,43 @@ Skillpocket/
 ├── README.md
 └── docker-compose.yml
 
+## added this in a project files
+frontend/user/src/components/dashboard/
+├── freelancer/
+│   ├── FreelancerSidebar.jsx (from previous artifact)
+│   └── FreelancerNavbar.jsx (from previous artifact)
+└── client/
+    ├── ClientSidebar.jsx (this file above)
+    └── ClientNavbar.jsx (this file above)
+
+
+frontend/user/src/
+├── pages/
+│   ├── Login.jsx ✅
+│   ├── Signup.jsx ✅
+│   ├── FreelancerDashboard.jsx ✅
+│   ├── FreelancerJobs.jsx ✅ NEW
+│   ├── FreelancerMessages.jsx ✅ NEW
+│   ├── FreelancerWallet.jsx ✅ NEW
+│   ├── FreelancerProfile.jsx ✅ NEW
+│   ├── ClientDashboard.jsx ✅
+│   ├── ClientJobs.jsx ✅ NEW
+│   ├── ClientHire.jsx ✅ NEW
+│   ├── ClientInbox.jsx ✅ NEW
+│   ├── ClientFinances.jsx ✅ NEW
+│   ├── ClientHelp.jsx ✅ NEW
+│   └── ClientSettings.jsx ✅ NEW
+├── components/
+│   ├── dashboard/
+│   │   ├── freelancer/ ✅
+│   │   └── client/ ✅
+│   └── common/ ✅
+├── context/
+│   └── AuthContext.jsx ✅
+├── utils/
+│   └── authUtils.js ✅
+└── App.jsx ✅ UPDATED
+
 <div align="center">
   <img src="https://your-logo-url.com/logo.png" alt="skillspocket Logo" width="120" />
   <h2>A modern, premium freelancing marketplace connecting top talent with global clients</h2>

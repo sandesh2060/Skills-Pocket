@@ -1,71 +1,66 @@
 // ============================================
 // FILE: backend/user/src/socket/messageHandler.js
 // ============================================
-const { Message, Conversation } = require('../models/Message');
 const logger = require('../utils/logger');
 
-exports.handleMessageEvents = (socket, io) => {
-  socket.on('send_message', async (data) => {
-    try {
-      const { conversationId, recipientId, text, jobId } = data;
-
-      let conversation;
-      if (conversationId) {
-        conversation = await Conversation.findById(conversationId);
-      } else {
-        // Create or find conversation
-        conversation = await Conversation.findOne({
-          participants: { $all: [socket.userId, recipientId] },
-        });
-
-        if (!conversation) {
-          conversation = await Conversation.create({
-            participants: [socket.userId, recipientId],
-            job: jobId,
-          });
-        }
-      }
-
-      const message = await Message.create({
-        conversation: conversation._id,
-        sender: socket.userId,
-        recipient: recipientId,
-        text,
-        job: jobId,
-      });
-
-      await message.populate('sender', 'firstName lastName profilePicture');
-
-      // Update conversation
-      conversation.lastMessage = {
-        text,
-        sender: socket.userId,
-        timestamp: Date.now(),
-      };
-      await conversation.save();
-
-      // Emit to recipient
-      io.to(recipientId).emit('new_message', message);
-
-      // Emit to sender for confirmation
-      socket.emit('message_sent', message);
-    } catch (error) {
-      logger.error(`Send message error: ${error.message}`);
-      socket.emit('message_error', { error: error.message });
-    }
+const handleMessageEvents = (socket, io) => {
+  // Join conversation room
+  socket.on('join_conversation', (conversationId) => {
+    socket.join(`conversation_${conversationId}`);
+    logger.info(`User ${socket.userId} joined conversation ${conversationId}`);
   });
 
-  socket.on('typing', ({ conversationId, recipientId }) => {
+  // Leave conversation room
+  socket.on('leave_conversation', (conversationId) => {
+    socket.leave(`conversation_${conversationId}`);
+    logger.info(`User ${socket.userId} left conversation ${conversationId}`);
+  });
+
+  // Send message
+  socket.on('send_message', (data) => {
+    const { conversationId, recipientId, message } = data;
+    
+    // Emit to recipient
+    io.to(recipientId).emit('new_message', {
+      conversationId,
+      message,
+      senderId: socket.userId,
+    });
+    
+    // Emit to conversation room
+    io.to(`conversation_${conversationId}`).emit('message_sent', {
+      conversationId,
+      message,
+      senderId: socket.userId,
+    });
+  });
+
+  // Typing indicator
+  socket.on('typing', (data) => {
+    const { conversationId, recipientId } = data;
     io.to(recipientId).emit('user_typing', {
       conversationId,
       userId: socket.userId,
     });
   });
 
-  socket.on('stop_typing', ({ conversationId, recipientId }) => {
+  // Stop typing indicator
+  socket.on('stop_typing', (data) => {
+    const { conversationId, recipientId } = data;
     io.to(recipientId).emit('user_stop_typing', {
       conversationId,
       userId: socket.userId,
     });
   });
+
+  // Mark as read
+  socket.on('mark_read', (data) => {
+    const { conversationId, recipientId } = data;
+    io.to(recipientId).emit('messages_read', {
+      conversationId,
+      userId: socket.userId,
+    });
+  });
 };
+
+module.exports = { handleMessageEvents };

@@ -5,17 +5,6 @@
 
 const logger = require("../utils/logger");
 
-// Mock transporter for development
-const mockTransporter = {
-  sendMail: async (options) => {
-    console.log("\n📧 ========== EMAIL SENT (MOCK) ==========");
-    console.log("To:", options.to);
-    console.log("Subject:", options.subject);
-    console.log("=========================================\n");
-    return { messageId: "mock-" + Date.now() };
-  },
-};
-
 const emailTemplates = {
   emailVerification: (data) => ({
     subject: "Email Verification - skillspocket",

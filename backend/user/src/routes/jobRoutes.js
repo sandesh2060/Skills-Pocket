@@ -13,13 +13,19 @@ const {
 } = require('../controllers/jobController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
-router.get('/', getAllJobs);
-router.get('/:id', getJobById);
+// ⚠️ CRITICAL: Specific routes MUST come BEFORE parameterized routes
+// Place /my-jobs BEFORE /:id to prevent route collision
 
-// Protected routes
+// Public routes
+router.get('/', getAllJobs);
+
+// Protected routes - MUST be defined before /:id route
 router.use(protect);
+router.get('/my-jobs', authorize('client'), getMyJobs); // ✅ This MUST come before /:id
 router.post('/', authorize('client'), createJob);
-router.get('/my-jobs', authorize('client'), getMyJobs);
+
+// Parameterized routes - MUST come AFTER specific routes
+router.get('/:id', getJobById); // ✅ This catches everything else
 router.put('/:id', authorize('client'), updateJob);
 router.delete('/:id', authorize('client'), deleteJob);
 

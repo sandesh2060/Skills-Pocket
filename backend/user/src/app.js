@@ -19,6 +19,8 @@ const proposalRoutes = require('./routes/proposalRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const freelancerRoutes = require('./routes/freelancerRoutes'); // NEW
+const hireRoutes = require('./routes/hireRoutes'); // NEW
 
 const app = express();
 
@@ -26,9 +28,25 @@ const app = express();
 app.use(helmet());
 app.use(mongoSanitize());
 
-// CORS
+// CORS - Allow multiple origins
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174', // Admin frontend
+  process.env.FRONTEND_URL,
+].filter(Boolean); // Remove undefined values
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 
@@ -55,6 +73,8 @@ app.use('/api/proposals', proposalRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/freelancers', freelancerRoutes); // NEW - Freelancer browsing
+app.use('/api/hire-requests', hireRoutes); // NEW - Hire requests
 
 // Health check
 app.get('/api/health', (req, res) => {

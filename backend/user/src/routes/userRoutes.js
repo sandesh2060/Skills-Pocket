@@ -4,25 +4,28 @@
 const express = require('express');
 const router = express.Router();
 const {
+  getProfile,
   updateProfile,
   getUserById,
   uploadProfilePicture,
-  updatePassword,
-  addPortfolioItem,
-  deletePortfolioItem,
+  getDashboardStats,
 } = require('../controllers/userController');
-const { protect } = require('../middlewares/authMiddleware');
-const { uploadLimiter } = require('../middlewares/rateLimiter');
+const { protect, authorize } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/upload');
 
-router.get('/:id', getUserById);
+// ⚠️ CRITICAL: Specific routes MUST come BEFORE parameterized routes
+// Place all specific paths (/profile, /dashboard/stats) BEFORE /:id
 
-// Protected routes
+// Protected routes - MUST come BEFORE /:id route
 router.use(protect);
-router.put('/me', updateProfile);
-router.put('/me/password', updatePassword);
-router.post('/upload-profile-picture', uploadLimiter, upload.single('profilePicture'), uploadProfilePicture);
-router.post('/portfolio', upload.single('image'), addPortfolioItem);
-router.delete('/portfolio/:itemId', deletePortfolioItem);
+router.get('/profile', getProfile); // ✅ This MUST come before /:id
+router.put('/profile', updateProfile);
+router.post('/profile-picture', upload.single('profilePicture'), uploadProfilePicture);
+
+// Client-specific routes
+router.get('/dashboard/stats', authorize('client'), getDashboardStats);
+
+// Public routes with params - MUST come LAST
+router.get('/:id', getUserById); // ✅ This catches everything else after auth routes
 
 module.exports = router;

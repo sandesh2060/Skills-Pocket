@@ -1,72 +1,133 @@
 // ============================================
 // FILE: backend/user/src/config/redis.js
 // ============================================
-const Redis = require('ioredis');
+const redis = require('redis');
 const logger = require('../utils/logger');
+const config = require('./env');
 
 let redisClient = null;
 
-const connectRedis = () => {
-  if (process.env.REDIS_ENABLED !== 'true') {
-    logger.info('Redis is disabled');
+const connectRedis = async () => {
+  if (!config.redis.enabled) {
+    logger.info('Redis is disabled in configuration');
     return null;
   }
 
   try {
-    redisClient = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: process.env.REDIS_PORT || 6379,
-      password: process.env.REDIS_PASSWORD || undefined,
-      retryStrategy: (times) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
+    redisClient = redis.createClient({
+      socket: {
+        host: config.redis.host,
+        port: config.redis.port,
       },
-    });
-
-    redisClient.on('connect', () => {
-      logger.info('Redis connected successfully');
+      password: config.redis.password,
+      legacyMode: false,
     });
 
     redisClient.on('error', (err) => {
       logger.error(`Redis error: ${err.message}`);
     });
 
+    redisClient.on('connect', () => {
+      logger.info('Redis client connected');
+    });
+
+    redisClient.on('ready', () => {
+      logger.info('Redis client ready');
+    });
+
+    redisClient.on('end', () => {
+      logger.warn('Redis client disconnected');
+    });
+
+    await redisClient.connect();
+
     return redisClient;
   } catch (error) {
-    logger.error(`Redis connection failed: ${error.message}`);
+    logger.error(`Failed to connect to Redis: ${error.message}`);
+    logger.warn('Continuing without Redis caching');
     return null;
   }
 };
 
-const getRedisClient = () => redisClient;
+const getRedisClient = () => {
+  return redisClient;
+};
+
+const disconnectRedis = async () => {
+  if (redisClient) {
+    await redisClient.quit();
+    logger.info('Redis client disconnected');
+  }
+};
+
+// Cache helpers
+const cacheSet = async (key, value, ttl = 3600) => {
+  if (!redisClient) return false;
+  
+  try {
+    await redisClient.setEx(
+      key,
+      ttl,
+      typeof value === 'object' ? JSON.stringify(value) : value
+    );
+    return true;
+  } catch (error) {
+    logger.error(`Redis SET error: ${error.message}`);
+    return false;
+  }
+};
 
 const cacheGet = async (key) => {
   if (!redisClient) return null;
+  
   try {
-    const data = await redisClient.get(key);
-    return data ? JSON.parse(data) : null;
+    const value = await redisClient.get(key);
+    if (!value) return null;
+    
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
   } catch (error) {
     logger.error(`Redis GET error: ${error.message}`);
     return null;
   }
 };
 
-const cacheSet = async (key, value, expirationInSeconds = 3600) => {
-  if (!redisClient) return;
-  try {
-    await redisClient.setex(key, expirationInSeconds, JSON.stringify(value));
-  } catch (error) {
-    logger.error(`Redis SET error: ${error.message}`);
-  }
-};
-
 const cacheDel = async (key) => {
-  if (!redisClient) return;
+  if (!redisClient) return false;
+  
   try {
     await redisClient.del(key);
+    return true;
   } catch (error) {
     logger.error(`Redis DEL error: ${error.message}`);
+    return false;
   }
 };
 
-module.exports = { connectRedis, getRedisClient, cacheGet, cacheSet, cacheDel };
+const cacheDelPattern = async (pattern) => {
+  if (!redisClient) return false;
+  
+  try {
+    const keys = await redisClient.keys(pattern);
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+    }
+    return true;
+  } catch (error) {
+    logger.error(`Redis DEL pattern error: ${error.message}`);
+    return false;
+  }
+};
+
+module.exports = {
+  connectRedis,
+  getRedisClient,
+  disconnectRedis,
+  cacheSet,
+  cacheGet,
+  cacheDel,
+  cacheDelPattern,
+};

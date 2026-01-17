@@ -4,22 +4,24 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getWallet,
-  getTransactionHistory,
-  createPaymentIntent,
-  releasePayment,
-  requestWithdrawal,
+  getMyTransactions,
   getTransactionById,
+  createTransaction,
+  updateTransactionStatus,
+  getFinancialSummary,
 } = require('../controllers/transactionController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
+// All routes are protected
 router.use(protect);
 
-router.get('/wallet', getWallet);
-router.get('/', getTransactionHistory);
+// Specific routes BEFORE parameterized routes
+router.get('/my-transactions', getMyTransactions);
+router.get('/summary', getFinancialSummary);
+router.post('/', createTransaction);
+
+// Parameterized routes LAST
 router.get('/:id', getTransactionById);
-router.post('/payment-intent', authorize('client'), createPaymentIntent);
-router.post('/release', authorize('client'), releasePayment);
-router.post('/withdraw', authorize('freelancer'), requestWithdrawal);
+router.put('/:id/status', updateTransactionStatus);
 
 module.exports = router;

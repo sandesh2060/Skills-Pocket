@@ -1,78 +1,106 @@
-
 // ============================================
 // FILE: backend/user/src/models/Transaction.js
 // ============================================
 const mongoose = require('mongoose');
 
-const transactionSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    enum: ['payment', 'withdrawal', 'refund', 'escrow', 'release'],
-    required: true,
+const transactionSchema = new mongoose.Schema(
+  {
+    from: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Sender is required'],
+    },
+    to: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Recipient is required'],
+    },
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Job',
+    },
+    amount: {
+      type: Number,
+      required: [true, 'Amount is required'],
+      min: [0, 'Amount must be positive'],
+    },
+    type: {
+      type: String,
+      enum: ['payment', 'refund', 'withdrawal', 'deposit', 'escrow_release'],
+      default: 'payment',
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'completed', 'failed', 'cancelled', 'refunded'],
+      default: 'pending',
+    },
+    paymentMethod: {
+      type: {
+        type: String,
+        enum: ['card', 'bank', 'paypal', 'stripe', 'wallet'],
+      },
+      last4: String,
+      brand: String,
+    },
+    description: {
+      type: String,
+      maxlength: [500, 'Description cannot exceed 500 characters'],
+    },
+    metadata: {
+      type: Map,
+      of: String,
+    },
+    stripePaymentIntentId: String,
+    stripeChargeId: String,
+    completedAt: Date,
+    failedAt: Date,
+    failureReason: String,
   },
-  amount: {
-    type: Number,
-    required: [true, 'Amount is required'],
-    min: [0, 'Amount cannot be negative'],
-  },
-  currency: {
-    type: String,
-    default: 'USD',
-  },
-  status: {
-    type: String,
-    enum: ['pending', 'completed', 'failed', 'cancelled', 'refunded'],
-    default: 'pending',
-  },
-  from: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  to: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  job: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Job',
-  },
-  milestone: {
-    type: mongoose.Schema.Types.ObjectId,
-  },
-  paymentMethod: {
-    type: String,
-    enum: ['stripe', 'paypal', 'bank_transfer', 'wallet'],
-  },
-  paymentIntentId: String,
-  stripeChargeId: String,
-  description: String,
-  platformFee: {
-    type: Number,
-    default: 0,
-  },
-  netAmount: Number,
-  metadata: {
-    type: Map,
-    of: String,
-  },
-  failureReason: String,
-  processedAt: Date,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-}, {
-  timestamps: true,
-});
+  {
+    timestamps: true,
+  }
+);
 
-// Indexes
+// Indexes for better query performance
 transactionSchema.index({ from: 1, createdAt: -1 });
 transactionSchema.index({ to: 1, createdAt: -1 });
 transactionSchema.index({ job: 1 });
 transactionSchema.index({ status: 1 });
+transactionSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.model('Transaction', transactionSchema);
+// Virtual for transaction age
+transactionSchema.virtual('age').get(function () {
+  return Math.floor((Date.now() - this.createdAt) / (1000 * 60 * 60 * 24));
+});
+
+// Method to check if transaction is editable
+transactionSchema.methods.isEditable = function () {
+  return this.status === 'pending';
+};
+
+// Static method to get user transactions summary
+transactionSchema.statics.getUserSummary = async function (userId) {
+  const summary = await this.aggregate([
+    {
+      $match: {
+        $or: [
+          { from: mongoose.Types.ObjectId(userId) },
+          { to: mongoose.Types.ObjectId(userId) },
+        ],
+      },
+    },
+    {
+      $group: {
+        _id: '$status',
+        count: { $sum: 1 },
+        total: { $sum: '$amount' },
+      },
+    },
+  ]);
+
+  return summary;
+};
+
+const Transaction = mongoose.model('Transaction', transactionSchema);
+
+module.exports = Transaction;

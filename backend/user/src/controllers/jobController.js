@@ -1,4 +1,3 @@
-
 // ============================================
 // FILE: backend/user/src/controllers/jobController.js
 // ============================================
@@ -32,11 +31,14 @@ exports.createJob = async (req, res) => {
       data: job,
     });
   } catch (error) {
-    logger.error(`Create job error: ${error.message}`);
+    logger.error(`Create job error: ${error.message}`, { 
+      userId: req.user?.id, 
+      stack: error.stack 
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to create job',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
@@ -100,11 +102,11 @@ exports.getAllJobs = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error(`Get all jobs error: ${error.message}`);
+    logger.error(`Get all jobs error: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch jobs',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
@@ -114,6 +116,14 @@ exports.getAllJobs = async (req, res) => {
 // @access  Public
 exports.getJobById = async (req, res) => {
   try {
+    // Validate MongoDB ObjectId
+    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid job ID format',
+      });
+    }
+
     const job = await Job.findById(req.params.id)
       .populate('client', 'firstName lastName email profilePicture rating totalReviews')
       .populate({
@@ -137,11 +147,14 @@ exports.getJobById = async (req, res) => {
       data: job,
     });
   } catch (error) {
-    logger.error(`Get job by ID error: ${error.message}`);
+    logger.error(`Get job by ID error: ${error.message}`, { 
+      jobId: req.params.id, 
+      stack: error.stack 
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch job',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
@@ -179,11 +192,15 @@ exports.updateJob = async (req, res) => {
       data: updatedJob,
     });
   } catch (error) {
-    logger.error(`Update job error: ${error.message}`);
+    logger.error(`Update job error: ${error.message}`, { 
+      jobId: req.params.id, 
+      userId: req.user?.id, 
+      stack: error.stack 
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to update job',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
@@ -216,11 +233,15 @@ exports.deleteJob = async (req, res) => {
       message: 'Job deleted successfully',
     });
   } catch (error) {
-    logger.error(`Delete job error: ${error.message}`);
+    logger.error(`Delete job error: ${error.message}`, { 
+      jobId: req.params.id, 
+      userId: req.user?.id, 
+      stack: error.stack 
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to delete job',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
@@ -230,8 +251,24 @@ exports.deleteJob = async (req, res) => {
 // @access  Private (Client)
 exports.getMyJobs = async (req, res) => {
   try {
+    // Enhanced logging for debugging
+    logger.info(`Get my jobs request`, { 
+      userId: req.user?.id, 
+      role: req.user?.role,
+      query: req.query 
+    });
+
+    // Verify user exists
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+    }
+
     const { page = 1, limit = 10, status } = req.query;
     const query = { client: req.user.id };
+    
     if (status) query.status = status;
 
     const skip = (page - 1) * limit;
@@ -245,6 +282,12 @@ exports.getMyJobs = async (req, res) => {
       Job.countDocuments(query),
     ]);
 
+    logger.info(`Get my jobs success`, { 
+      userId: req.user.id, 
+      jobsCount: jobs.length,
+      total 
+    });
+
     res.status(200).json({
       success: true,
       data: {
@@ -257,11 +300,15 @@ exports.getMyJobs = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error(`Get my jobs error: ${error.message}`);
+    logger.error(`Get my jobs error: ${error.message}`, { 
+      userId: req.user?.id,
+      query: req.query,
+      stack: error.stack 
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch jobs',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };

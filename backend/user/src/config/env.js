@@ -1,110 +1,94 @@
 // ============================================
 // FILE: backend/user/src/config/env.js
 // ============================================
-const dotenv = require("dotenv");
-const path = require("path");
+require('dotenv').config();
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, "../../.env") });
+const requiredEnvVars = [
+  'NODE_ENV',
+  'PORT',
+  'MONGO_URI',
+  'JWT_SECRET',
+  'JWT_EXPIRE',
+  'FRONTEND_URL',
+];
 
+// Validate environment variables
 const validateEnv = () => {
-  // Required variables that must be present
-  const required = ["NODE_ENV", "PORT", "JWT_SECRET"];
-
-  // Check for MongoDB URI (accept either MONGO_URI or MONGODB_URI)
-  const hasMongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
-  if (!hasMongoUri) {
-    throw new Error(
-      "Missing required environment variable: MONGO_URI or MONGODB_URI"
-    );
-  }
-
-  // Normalize - if only MONGODB_URI exists, copy it to MONGO_URI
-  if (!process.env.MONGO_URI && process.env.MONGODB_URI) {
-    process.env.MONGO_URI = process.env.MONGODB_URI;
-  }
-
-  const missing = required.filter((key) => !process.env[key]);
-
+  const missing = requiredEnvVars.filter(varName => !process.env[varName]);
+  
   if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variables: ${missing.join(", ")}`
-    );
-  }
-
-  // Warn about optional but recommended variables
-  const optional = [
-    "CLOUDINARY_CLOUD_NAME",
-    "STRIPE_SECRET_KEY",
-    "EMAIL_USER",
-    "FRONTEND_URL",
-  ];
-
-  const missingOptional = optional.filter((key) => !process.env[key]);
-  if (missingOptional.length > 0 && process.env.NODE_ENV !== "test") {
-    console.warn(
-      `⚠️  Optional environment variables not set: ${missingOptional.join(", ")}`
-    );
-    console.warn("   Some features may not work until these are configured.");
+    console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
+    console.error('Please check your .env file');
+    process.exit(1);
   }
 };
 
-// Validate on module load
+// Run validation immediately
 validateEnv();
 
 // Export configuration object
-module.exports = {
-  env: process.env.NODE_ENV || "development",
+const config = {
+  env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 5000,
-
+  
+  // Database
   database: {
-    uri: process.env.MONGO_URI || process.env.MONGODB_URI,
+    uri: process.env.MONGO_URI,
   },
-
+  
+  // JWT
   jwt: {
     secret: process.env.JWT_SECRET,
-    expire: process.env.JWT_EXPIRE || "7d",
-    refreshSecret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
-    refreshExpire: process.env.JWT_REFRESH_EXPIRE || "30d",
+    expire: process.env.JWT_EXPIRE || '7d',
   },
-
-  email: {
-    host: process.env.EMAIL_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.EMAIL_PORT, 10) || 587,
-    user: process.env.EMAIL_USER,
-    password: process.env.EMAIL_PASSWORD,
-    from: process.env.EMAIL_FROM || "noreply@skillspocket.com",
+  
+  // Frontend
+  frontend: {
+    url: process.env.FRONTEND_URL,
   },
-
+  
+  // Redis
+  redis: {
+    enabled: process.env.REDIS_ENABLED === 'true',
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+    password: process.env.REDIS_PASSWORD,
+  },
+  
+  // Cloudinary
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
-
+  
+  // Email
+  email: {
+    from: process.env.EMAIL_FROM || 'noreply@skillspocket.com',
+    host: process.env.EMAIL_HOST,
+    port: parseInt(process.env.EMAIL_PORT, 10) || 587,
+    user: process.env.EMAIL_USER,
+    password: process.env.EMAIL_PASSWORD,
+  },
+  
+  // Payment (Stripe)
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+    platformFee: parseFloat(process.env.PLATFORM_FEE) || 10, // 10% default
   },
-
-  redis: {
-    enabled: process.env.REDIS_ENABLED === "true",
-    host: process.env.REDIS_HOST || "localhost",
-    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
-    password: process.env.REDIS_PASSWORD || "",
+  
+  // File Upload
+  upload: {
+    maxFileSize: parseInt(process.env.MAX_FILE_SIZE, 10) || 5242880, // 5MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'],
   },
-
-  frontend: {
-    url: process.env.FRONTEND_URL || "http://localhost:3000",
-  },
-
+  
+  // Rate Limiting
   rateLimit: {
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 900000,
-    maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 100,
-  },
-
-  logging: {
-    level: process.env.LOG_LEVEL || "info",
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // requests per window
   },
 };
+
+module.exports = config;
