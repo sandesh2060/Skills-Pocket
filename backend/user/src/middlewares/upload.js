@@ -1,15 +1,18 @@
 // ============================================
 // FILE: backend/user/src/middlewares/upload.js
+// PRODUCTION-READY - Multer with your config
 // ============================================
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const config = require('../config/env');
 
 // Ensure upload directories exist
 const uploadDirs = [
   'uploads/profiles',
   'uploads/documents',
-  'uploads/attachments'
+  'uploads/attachments',
+  'uploads/temp'
 ];
 
 uploadDirs.forEach(dir => {
@@ -19,20 +22,12 @@ uploadDirs.forEach(dir => {
   }
 });
 
-// Storage configuration
+// Storage configuration for temporary local storage
+// Files will be uploaded to Cloudinary and then deleted locally
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    let uploadPath = 'uploads/';
-    
-    if (file.fieldname === 'profilePicture') {
-      uploadPath += 'profiles/';
-    } else if (file.fieldname === 'document') {
-      uploadPath += 'documents/';
-    } else {
-      uploadPath += 'attachments/';
-    }
-    
-    cb(null, uploadPath);
+    // Store temporarily in uploads/temp
+    cb(null, 'uploads/temp/');
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -40,17 +35,21 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter
+// File filter for validation
 const fileFilter = (req, file, cb) => {
-  // Allowed file types
   const allowedImageTypes = /jpeg|jpg|png|gif|webp/;
   const allowedDocTypes = /pdf|doc|docx|txt/;
   
   const extname = path.extname(file.originalname).toLowerCase();
   const mimetype = file.mimetype;
   
+  // Check if file type is in allowed types from config
+  if (config.upload.allowedFileTypes && !config.upload.allowedFileTypes.includes(mimetype)) {
+    return cb(new Error(`File type ${mimetype} is not allowed`));
+  }
+  
   if (file.fieldname === 'profilePicture') {
-    const isValidImage = allowedImageTypes.test(extname) && 
+    const isValidImage = allowedImageTypes.test(extname.replace('.', '')) && 
                          mimetype.startsWith('image/');
     
     if (isValidImage) {
@@ -59,7 +58,7 @@ const fileFilter = (req, file, cb) => {
       cb(new Error('Only image files (JPEG, JPG, PNG, GIF, WebP) are allowed for profile pictures!'));
     }
   } else if (file.fieldname === 'document') {
-    const isValidDoc = allowedDocTypes.test(extname);
+    const isValidDoc = allowedDocTypes.test(extname.replace('.', ''));
     
     if (isValidDoc) {
       cb(null, true);
@@ -72,12 +71,12 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Multer upload instance
+// Multer upload instance with config from env
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB max file size
+    fileSize: config.upload.maxFileSize || 5 * 1024 * 1024, // Default 5MB
   }
 });
 

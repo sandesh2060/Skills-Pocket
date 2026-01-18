@@ -1,8 +1,56 @@
 // ============================================
 // FILE: frontend/user/src/api/authApi.js
+// FIXED - Prevents infinite retries on network errors
 // ============================================
 import { userApi, adminApi } from './axios';
 import { isAdminEmail } from '../utils/authUtils';
+
+// Track failed requests to prevent infinite retries
+const failedRequests = new Map();
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 5000; // 5 seconds
+
+/**
+ * Check if we should skip request due to recent failures
+ */
+const shouldSkipRequest = (key) => {
+  const lastFailure = failedRequests.get(key);
+  if (!lastFailure) return false;
+  
+  const { count, timestamp } = lastFailure;
+  const timeSinceFailure = Date.now() - timestamp;
+  
+  // If we've hit max retries and it's been less than RETRY_DELAY, skip
+  if (count >= MAX_RETRIES && timeSinceFailure < RETRY_DELAY) {
+    return true;
+  }
+  
+  // Reset if enough time has passed
+  if (timeSinceFailure >= RETRY_DELAY) {
+    failedRequests.delete(key);
+    return false;
+  }
+  
+  return false;
+};
+
+/**
+ * Record a failed request
+ */
+const recordFailure = (key) => {
+  const existing = failedRequests.get(key);
+  failedRequests.set(key, {
+    count: existing ? existing.count + 1 : 1,
+    timestamp: Date.now()
+  });
+};
+
+/**
+ * Clear failure record on success
+ */
+const clearFailure = (key) => {
+  failedRequests.delete(key);
+};
 
 /**
  * Register new user
@@ -27,11 +75,13 @@ export const login = async (credentials) => {
   
   try {
     const response = await api.post(endpoint, { email, password });
+    clearFailure('login');
     return {
       ...response.data,
       userType: isAdmin ? 'admin' : 'user'
     };
   } catch (error) {
+    recordFailure('login');
     throw error;
   }
 };
@@ -87,6 +137,7 @@ export const logout = async () => {
   
   try {
     const response = await api.post('/auth/logout');
+    clearFailure('getCurrentUser');
     return response.data;
   } catch (error) {
     // Even if API call fails, clear local data
@@ -96,12 +147,31 @@ export const logout = async () => {
 
 /**
  * Get current user/admin
+ * WITH RETRY PREVENTION - Won't spam requests when offline
  */
 export const getCurrentUser = async () => {
+  const requestKey = 'getCurrentUser';
+  
+  // Skip if we've recently failed multiple times
+  if (shouldSkipRequest(requestKey)) {
+    console.log('⏭️ Skipping getCurrentUser - too many recent failures');
+    throw new Error('Skipping request due to recent failures');
+  }
+  
   const userType = localStorage.getItem('userType');
   const api = userType === 'admin' ? adminApi : userApi;
   const endpoint = userType === 'admin' ? '/admin/auth/me' : '/auth/me';
   
-  const response = await api.get(endpoint);
-  return response.data;
+  try {
+    const response = await api.get(endpoint);
+    clearFailure(requestKey);
+    return response.data;
+  } catch (error) {
+    // Only record network errors, not 401s
+    if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      recordFailure(requestKey);
+      console.log(`⚠️ Network error in getCurrentUser (attempt ${failedRequests.get(requestKey)?.count || 1}/${MAX_RETRIES})`);
+    }
+    throw error;
+  }
 };

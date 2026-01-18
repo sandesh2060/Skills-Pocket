@@ -5,9 +5,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ClientSidebar from "../components/dashboard/client/ClientSidebar";
 import ClientNavbar from "../components/dashboard/client/ClientNavbar";
-import axios from 'axios';
-
-const API_URL = 'http://localhost:5000/api';
+import api from '../services/api'; // ✅ CHANGE THIS LINE
 
 export default function ClientJobs() {
   const navigate = useNavigate();
@@ -15,7 +13,7 @@ export default function ClientJobs() {
   const [jobs, setJobs] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // all, open, in-progress, completed, closed
+  const [filter, setFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -38,24 +36,18 @@ export default function ClientJobs() {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      setError(''); // Clear previous errors
-      const token = localStorage.getItem('token');
+      setError('');
       
-      // Build params based on filter
       const params = {};
       if (filter !== 'all') {
-        // Map 'in-progress' to 'in_progress' for backend
         params.status = filter === 'in-progress' ? 'in_progress' : filter;
       }
       
-      const response = await axios.get(`${API_URL}/jobs/my-jobs`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params
-      });
+      // ✅ CHANGE THIS - use api instead of axios
+      const response = await api.get('/jobs/my-jobs', { params });
 
-      console.log('API Response:', response.data); // Debug log
+      console.log('API Response:', response.data);
 
-      // ✅ FIX: Extract jobs array from nested data structure
       if (response.data.success && response.data.data) {
         setJobs(response.data.data.jobs || []);
         setPagination(response.data.data.pagination || null);
@@ -66,7 +58,7 @@ export default function ClientJobs() {
     } catch (err) {
       console.error('Fetch jobs error:', err);
       setError(err.response?.data?.message || 'Failed to load jobs');
-      setJobs([]); // Set empty array on error
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -78,7 +70,6 @@ export default function ClientJobs() {
     setSuccess('');
 
     try {
-      const token = localStorage.getItem('token');
       const jobData = {
         ...formData,
         skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
@@ -88,9 +79,8 @@ export default function ClientJobs() {
         }
       };
 
-      await axios.post(`${API_URL}/jobs`, jobData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // ✅ CHANGE THIS - use api instead of axios
+      await api.post('/jobs', jobData);
 
       setSuccess('Job posted successfully!');
       setShowCreateModal(false);
@@ -107,7 +97,6 @@ export default function ClientJobs() {
       });
       fetchJobs();
       
-      // Auto-clear success message
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create job');
@@ -118,19 +107,17 @@ export default function ClientJobs() {
     if (!confirm('Are you sure you want to delete this job?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/jobs/${jobId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // ✅ CHANGE THIS - use api instead of axios
+      await api.delete(`/jobs/${jobId}`);
+      
       setSuccess('Job deleted successfully');
       fetchJobs();
       
-      // Auto-clear success message
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete job');
     }
-  };
+  }
 
   const getStatusColor = (status) => {
     const colors = {

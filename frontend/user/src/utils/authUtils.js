@@ -23,7 +23,7 @@ export const isAdminEmail = (email) => {
  * Store authentication data in localStorage
  */
 export const storeAuthData = (token, user, userType) => {
-  localStorage.setItem('token', token);
+  localStorage.setItem('authToken', token); // Changed from 'token' to 'authToken' to match everywhere
   localStorage.setItem('user', JSON.stringify(user));
   localStorage.setItem('userType', userType);
 };
@@ -32,7 +32,7 @@ export const storeAuthData = (token, user, userType) => {
  * Get authentication data from localStorage
  */
 export const getAuthData = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('authToken'); // Changed from 'token' to 'authToken'
   const userStr = localStorage.getItem('user');
   const userType = localStorage.getItem('userType');
   
@@ -52,7 +52,7 @@ export const getAuthData = () => {
  * Clear authentication data from localStorage
  */
 export const clearAuthData = () => {
-  localStorage.removeItem('token');
+  localStorage.removeItem('authToken'); // Changed from 'token' to 'authToken'
   localStorage.removeItem('user');
   localStorage.removeItem('userType');
 };
@@ -145,24 +145,53 @@ export const getUserInitials = (user) => {
  * Get auth token
  */
 export const getToken = () => {
-  return localStorage.getItem('token');
+  return localStorage.getItem('authToken'); // Changed from 'token' to 'authToken'
 };
 
 /**
  * Check if token is expired (simple check)
- * Note: For production, decode JWT and check exp claim
  */
 export const isTokenExpired = () => {
   const token = getToken();
   if (!token) return true;
   
   try {
-    // Simple decode (not secure, just for checking)
+    // Decode JWT payload (not secure, just for checking exp)
     const payload = JSON.parse(atob(token.split('.')[1]));
+    
+    if (!payload.exp) {
+      console.warn('Token has no expiration field');
+      return false; // If no exp field, assume not expired
+    }
+    
     const exp = payload.exp * 1000; // Convert to milliseconds
-    return Date.now() >= exp;
+    const now = Date.now();
+    const isExpired = now >= exp;
+    
+    if (isExpired) {
+      console.log('Token expired at:', new Date(exp));
+    }
+    
+    return isExpired;
   } catch (e) {
-    return true;
+    console.error('Error checking token expiration:', e);
+    return true; // If can't decode, assume expired
+  }
+};
+
+/**
+ * Get token expiration time
+ */
+export const getTokenExpiration = () => {
+  const token = getToken();
+  if (!token) return null;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp ? new Date(payload.exp * 1000) : null;
+  } catch (e) {
+    console.error('Error getting token expiration:', e);
+    return null;
   }
 };
 

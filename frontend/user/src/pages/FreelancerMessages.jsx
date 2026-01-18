@@ -1,27 +1,149 @@
 // ============================================
 // FILE: frontend/user/src/pages/FreelancerMessages.jsx
+// UPDATED VERSION - Auto-selects conversation from URL query
 // ============================================
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 import FreelancerNavbar from '../components/dashboard/freelancer/FreelancerNavbar';
 import FreelancerSidebar from '../components/dashboard/freelancer/FreelancerSidebar';
+import { 
+  getConversations, 
+  getMessages, 
+  sendMessage, 
+  markAsRead 
+} from '../api/messageApi';
 
 export default function FreelancerMessages() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedChat, setSelectedChat] = useState(1);
+  
+  const [conversations, setConversations] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [messageInput, setMessageInput] = useState('');
+  
+  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
 
-  const conversations = [
-    { id: 1, name: 'Sarah Johnson', avatar: 'https://ui-avatars.com/api/?name=Sarah+Johnson&background=137fec&color=fff', lastMessage: 'Thanks! The designs look great', time: '5m ago', unread: 2, online: true },
-    { id: 2, name: 'Mike Chen', avatar: 'https://ui-avatars.com/api/?name=Mike+Chen&background=10b981&color=fff', lastMessage: 'Can we schedule a call?', time: '1h ago', unread: 0, online: false },
-    { id: 3, name: 'Emily Davis', avatar: 'https://ui-avatars.com/api/?name=Emily+Davis&background=f59e0b&color=fff', lastMessage: 'Perfect! Let\'s proceed', time: '2h ago', unread: 1, online: true },
-  ];
+  // Load conversations on mount
+  useEffect(() => {
+    fetchConversations();
+  }, []);
 
-  const messages = [
-    { id: 1, sender: 'them', text: 'Hi! I loved your proposal for the website redesign project.', time: '10:30 AM' },
-    { id: 2, sender: 'me', text: 'Thank you! I\'m excited to work on this project with you.', time: '10:32 AM' },
-    { id: 3, sender: 'them', text: 'Can you share some examples of your previous work?', time: '10:35 AM' },
-    { id: 4, sender: 'me', text: 'Of course! Here\'s my portfolio link: portfolio.com', time: '10:37 AM' },
-    { id: 5, sender: 'them', text: 'Thanks! The designs look great', time: '10:40 AM' },
-  ];
+  // Auto-select conversation from URL query parameter
+  useEffect(() => {
+    const conversationId = searchParams.get('conversation');
+    if (conversationId && conversations.length > 0) {
+      const conversation = conversations.find(c => c._id === conversationId);
+      if (conversation) {
+        handleSelectConversation(conversation);
+        // Remove query parameter after selecting
+        navigate('/freelancer/messages', { replace: true });
+      }
+    }
+  }, [searchParams, conversations]);
+
+  const fetchConversations = async () => {
+    try {
+      setLoadingConversations(true);
+      const response = await getConversations();
+      
+      if (response.success) {
+        setConversations(response.data.conversations || []);
+      }
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      toast.error('Failed to load conversations');
+    } finally {
+      setLoadingConversations(false);
+    }
+  };
+
+  const handleSelectConversation = async (conversation) => {
+    try {
+      setSelectedConversation(conversation);
+      setLoadingMessages(true);
+      
+      const response = await getMessages(conversation._id);
+      
+      if (response.success) {
+        setMessages(response.data.messages || []);
+        // Mark as read
+        await markAsRead(conversation._id);
+        // Update conversation in list
+        setConversations(prev => 
+          prev.map(c => 
+            c._id === conversation._id 
+              ? { ...c, unreadCount: 0 }
+              : c
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      toast.error('Failed to load messages');
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    
+    if (!messageInput.trim() || !selectedConversation) return;
+
+    try {
+      setSendingMessage(true);
+      
+      const response = await sendMessage(selectedConversation._id, messageInput.trim());
+      
+      if (response.success) {
+        setMessages(prev => [...prev, response.data.message]);
+        setMessageInput('');
+        
+        // Update conversation list with new last message
+        setConversations(prev => 
+          prev.map(c => 
+            c._id === selectedConversation._id
+              ? { 
+                  ...c, 
+                  lastMessage: response.data.message.content,
+                  lastMessageAt: response.data.message.createdAt 
+                }
+              : c
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const getOtherParticipant = (conversation) => {
+    return conversation.participants?.find(p => p._id !== user._id);
+  };
+
+  const formatMessageTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+    
+    if (diffInHours < 24) {
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } else if (diffInHours < 48) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f6f7f8] dark:bg-bg-dark">
@@ -34,115 +156,209 @@ export default function FreelancerMessages() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <FreelancerNavbar onMenuClick={() => setSidebarOpen(true)} />
         
-        <div className="flex-1 flex overflow-hidden">
-          {/* Conversations List */}
-          <div className="w-full md:w-80 border-r border-[#e7edf3] dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto">
-            <div className="p-4 border-b border-[#e7edf3] dark:border-slate-800">
-              <h2 className="text-xl font-bold text-[#0d141b] dark:text-white mb-4">Messages</h2>
-              <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4c739a]" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                </svg>
-                <input
-                  className="w-full pl-10 pr-4 py-2 bg-[#f0f2f5] dark:bg-slate-800 border-none rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/50"
-                  placeholder="Search conversations..."
-                />
+        <main className="flex-1 overflow-hidden">
+          <div className="h-full flex">
+            {/* Conversations List */}
+            <div className="w-full md:w-80 lg:w-96 border-r border-[#e7edf3] dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
+              <div className="p-4 border-b border-[#e7edf3] dark:border-slate-800">
+                <h1 className="text-2xl font-bold text-[#0d141b] dark:text-white">Messages</h1>
               </div>
-            </div>
-
-            <div className="divide-y divide-[#e7edf3] dark:divide-slate-800">
-              {conversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  onClick={() => setSelectedChat(conv.id)}
-                  className={`p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
-                    selectedChat === conv.id ? 'bg-primary/5 dark:bg-primary/10' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="relative">
-                      <img src={conv.avatar} alt={conv.name} className="w-12 h-12 rounded-full" />
-                      {conv.online && (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-slate-900" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-[#0d141b] dark:text-white truncate">{conv.name}</h3>
-                        <span className="text-xs text-[#4c739a] dark:text-slate-400">{conv.time}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-[#4c739a] dark:text-slate-400 truncate">{conv.lastMessage}</p>
-                        {conv.unread > 0 && (
-                          <span className="ml-2 px-2 py-0.5 bg-primary text-white text-xs rounded-full">{conv.unread}</span>
+              
+              <div className="flex-1 overflow-y-auto">
+                {loadingConversations ? (
+                  <div className="flex items-center justify-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : conversations.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <svg className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <p className="text-[#4c739a] dark:text-slate-400">No conversations yet</p>
+                    <p className="text-sm text-[#4c739a] dark:text-slate-400 mt-2">
+                      Start messaging clients from job pages
+                    </p>
+                  </div>
+                ) : (
+                  conversations.map(conversation => {
+                    const otherUser = getOtherParticipant(conversation);
+                    const isSelected = selectedConversation?._id === conversation._id;
+                    
+                    return (
+                      <button
+                        key={conversation._id}
+                        onClick={() => handleSelectConversation(conversation)}
+                        className={`w-full p-4 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
+                          isSelected ? 'bg-primary/10 dark:bg-primary/20' : ''
+                        }`}
+                      >
+                        {otherUser?.profilePicture ? (
+                          <img
+                            src={otherUser.profilePicture}
+                            alt={`${otherUser.firstName} ${otherUser.lastName}`}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                            {otherUser?.firstName?.[0]}{otherUser?.lastName?.[0]}
+                          </div>
                         )}
+                        
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="font-semibold text-[#0d141b] dark:text-white truncate">
+                              {otherUser?.firstName} {otherUser?.lastName}
+                            </h3>
+                            <span className="text-xs text-[#4c739a] dark:text-slate-400 ml-2 flex-shrink-0">
+                              {formatMessageTime(conversation.lastMessageAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-[#4c739a] dark:text-slate-400 truncate">
+                            {conversation.lastMessage || 'Start a conversation'}
+                          </p>
+                        </div>
+                        
+                        {conversation.unreadCount > 0 && (
+                          <div className="flex-shrink-0 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white font-bold">
+                              {conversation.unreadCount}
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Message Thread */}
+            <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
+              {!selectedConversation ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center">
+                    <svg className="w-24 h-24 mx-auto text-slate-300 dark:text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <p className="text-xl text-[#4c739a] dark:text-slate-400">
+                      Select a conversation to start messaging
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Conversation Header */}
+                  <div className="p-4 border-b border-[#e7edf3] dark:border-slate-800 flex items-center gap-3">
+                    {(() => {
+                      const otherUser = getOtherParticipant(selectedConversation);
+                      return (
+                        <>
+                          {otherUser?.profilePicture ? (
+                            <img
+                              src={otherUser.profilePicture}
+                              alt={`${otherUser.firstName} ${otherUser.lastName}`}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                              {otherUser?.firstName?.[0]}{otherUser?.lastName?.[0]}
+                            </div>
+                          )}
+                          <div>
+                            <h2 className="font-bold text-[#0d141b] dark:text-white">
+                              {otherUser?.firstName} {otherUser?.lastName}
+                            </h2>
+                            <p className="text-sm text-[#4c739a] dark:text-slate-400">
+                              {otherUser?.company || otherUser?.role}
+                            </p>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {loadingMessages ? (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       </div>
+                    ) : messages.length === 0 ? (
+                      <div className="flex items-center justify-center h-full">
+                        <p className="text-[#4c739a] dark:text-slate-400">
+                          No messages yet. Start the conversation!
+                        </p>
+                      </div>
+                    ) : (
+                      messages.map(message => {
+                        const isOwn = message.sender._id === user._id;
+                        return (
+                          <div
+                            key={message._id}
+                            className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
+                              <div
+                                className={`px-4 py-2 rounded-2xl ${
+                                  isOwn
+                                    ? 'bg-primary text-white'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-[#0d141b] dark:text-white'
+                                }`}
+                              >
+                                <p className="break-words">{message.content}</p>
+                              </div>
+                              <p className={`text-xs text-[#4c739a] dark:text-slate-400 mt-1 ${isOwn ? 'text-right' : 'text-left'}`}>
+                                {formatMessageTime(message.createdAt)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Message Input */}
+                  <form onSubmit={handleSendMessage} className="p-4 border-t border-[#e7edf3] dark:border-slate-800">
+                    <div className="flex items-end gap-3">
+                      <textarea
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        placeholder="Type your message..."
+                        rows={1}
+                        className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0d141b] dark:text-white outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage(e);
+                          }
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!messageInput.trim() || sendingMessage}
+                        className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {sendingMessage ? (
+                          <>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                            Send
+                          </>
+                        )}
+                      </button>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  </form>
+                </>
+              )}
             </div>
           </div>
-
-          {/* Chat Area */}
-          <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
-            {/* Chat Header */}
-            <div className="p-4 border-b border-[#e7edf3] dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img
-                  src={conversations.find(c => c.id === selectedChat)?.avatar}
-                  alt="User"
-                  className="w-10 h-10 rounded-full"
-                />
-                <div>
-                  <h3 className="font-semibold text-[#0d141b] dark:text-white">
-                    {conversations.find(c => c.id === selectedChat)?.name}
-                  </h3>
-                  <p className="text-xs text-[#4c739a] dark:text-slate-400">
-                    {conversations.find(c => c.id === selectedChat)?.online ? 'Online' : 'Offline'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-                  <svg className="w-5 h-5 text-[#4c739a]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] ${msg.sender === 'me' ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-[#0d141b] dark:text-white'} rounded-2xl px-4 py-2`}>
-                    <p className="text-sm">{msg.text}</p>
-                    <p className={`text-xs mt-1 ${msg.sender === 'me' ? 'text-white/70' : 'text-[#4c739a] dark:text-slate-400'}`}>{msg.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Message Input */}
-            <div className="p-4 border-t border-[#e7edf3] dark:border-slate-800">
-              <div className="flex items-center gap-3">
-                <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-                  <svg className="w-6 h-6 text-[#4c739a]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
-                  </svg>
-                </button>
-                <input
-                  className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-primary/50"
-                  placeholder="Type a message..."
-                />
-                <button className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors">
-                  Send
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        </main>
       </div>
     </div>
   );

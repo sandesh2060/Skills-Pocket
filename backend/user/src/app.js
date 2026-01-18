@@ -1,5 +1,5 @@
 // ============================================
-// FILE: backend/user/src/app.js
+// FILE: backend/user/src/app.js (UPDATED)
 // ============================================
 const express = require('express');
 const cors = require('cors');
@@ -19,8 +19,9 @@ const proposalRoutes = require('./routes/proposalRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
-const freelancerRoutes = require('./routes/freelancerRoutes'); // NEW
-const hireRoutes = require('./routes/hireRoutes'); // NEW
+const notificationRoutes = require('./routes/notificationRoutes'); // ✨ NEW
+const freelancerRoutes = require('./routes/freelancerRoutes');
+const hireRoutes = require('./routes/hireRoutes');
 
 const app = express();
 
@@ -73,8 +74,9 @@ app.use('/api/proposals', proposalRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/reviews', reviewRoutes);
-app.use('/api/freelancers', freelancerRoutes); // NEW - Freelancer browsing
-app.use('/api/hire-requests', hireRoutes); // NEW - Hire requests
+app.use('/api/notifications', notificationRoutes); // ✨ NEW - Notification routes
+app.use('/api/freelancers', freelancerRoutes);
+app.use('/api/hire-requests', hireRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

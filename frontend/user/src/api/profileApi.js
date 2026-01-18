@@ -1,21 +1,14 @@
 // ============================================
 // FILE: frontend/user/src/api/profileApi.js
+// PRODUCTION-READY - Complete profile API with error handling
 // ============================================
 import { userApi } from './axios';
-
-/**
- * Get public freelancer profile
- */
-export const getFreelancerProfile = async (freelancerId) => {
-  const response = await userApi.get(`/profiles/freelancer/${freelancerId}`);
-  return response.data;
-};
 
 /**
  * Get my profile
  */
 export const getMyProfile = async () => {
-  const response = await userApi.get('/profiles/me');
+  const response = await userApi.get('/users/profile');
   return response.data;
 };
 
@@ -23,18 +16,18 @@ export const getMyProfile = async () => {
  * Update my profile
  */
 export const updateProfile = async (profileData) => {
-  const response = await userApi.put('/profiles/me', profileData);
+  const response = await userApi.put('/users/profile', profileData);
   return response.data;
 };
 
 /**
- * Upload profile photo
+ * Upload profile picture
  */
-export const uploadProfilePhoto = async (file) => {
+export const uploadProfilePicture = async (file) => {
   const formData = new FormData();
-  formData.append('photo', file);
+  formData.append('profilePicture', file);
   
-  const response = await userApi.post('/profiles/photo', formData, {
+  const response = await userApi.post('/users/profile-picture', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
@@ -43,10 +36,26 @@ export const uploadProfilePhoto = async (file) => {
 };
 
 /**
+ * Add skill
+ */
+export const addSkill = async (skill) => {
+  const response = await userApi.post('/users/skills', { skill });
+  return response.data;
+};
+
+/**
+ * Remove skill
+ */
+export const removeSkill = async (skill) => {
+  const response = await userApi.delete(`/users/skills/${encodeURIComponent(skill)}`);
+  return response.data;
+};
+
+/**
  * Add portfolio item
  */
 export const addPortfolioItem = async (portfolioData) => {
-  const response = await userApi.post('/profiles/portfolio', portfolioData);
+  const response = await userApi.post('/users/portfolio', portfolioData);
   return response.data;
 };
 
@@ -54,7 +63,7 @@ export const addPortfolioItem = async (portfolioData) => {
  * Update portfolio item
  */
 export const updatePortfolioItem = async (itemId, portfolioData) => {
-  const response = await userApi.put(`/profiles/portfolio/${itemId}`, portfolioData);
+  const response = await userApi.put(`/users/portfolio/${itemId}`, portfolioData);
   return response.data;
 };
 
@@ -62,30 +71,30 @@ export const updatePortfolioItem = async (itemId, portfolioData) => {
  * Delete portfolio item
  */
 export const deletePortfolioItem = async (itemId) => {
-  const response = await userApi.delete(`/profiles/portfolio/${itemId}`);
+  const response = await userApi.delete(`/users/portfolio/${itemId}`);
   return response.data;
 };
 
 /**
- * Add skill
+ * Get public user profile by ID
  */
-export const addSkill = async (skill, proficiency) => {
-  const response = await userApi.post('/profiles/skills', { skill, proficiency });
+export const getUserById = async (userId) => {
+  const response = await userApi.get(`/users/${userId}`);
   return response.data;
 };
 
 /**
- * Remove skill
+ * Update notification preferences
  */
-export const removeSkill = async (skillId) => {
-  const response = await userApi.delete(`/profiles/skills/${skillId}`);
+export const updateNotificationPreferences = async (preferences) => {
+  const response = await userApi.put('/users/notifications', preferences);
   return response.data;
 };
 
 /**
- * Get freelancer reviews
+ * Deactivate account
  */
-export const getReviews = async (freelancerId) => {
-  const response = await userApi.get(`/profiles/freelancer/${freelancerId}/reviews`);
+export const deactivateAccount = async () => {
+  const response = await userApi.post('/users/deactivate');
   return response.data;
 };

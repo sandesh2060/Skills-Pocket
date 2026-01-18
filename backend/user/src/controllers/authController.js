@@ -1,5 +1,6 @@
 // ============================================
 // FILE: backend/user/src/controllers/authController.js
+// PRODUCTION-READY VERSION
 // ============================================
 const User = require("../models/User");
 const { sendEmail } = require("../services/emailService");
@@ -193,6 +194,90 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
+// @desc    Change password
+// @route   PUT /api/auth/change-password
+// @access  Private
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide current and new password',
+      });
+    }
+
+    // Get user with password
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Verify current password
+    const isPasswordMatch = await user.comparePassword(currentPassword);
+    if (!isPasswordMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect',
+      });
+    }
+
+    // Check if new password is same as current
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be different from current password',
+      });
+    }
+
+    // Validate new password strength
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 8 characters long',
+      });
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    logger.info(`Password changed successfully for user: ${user._id}`);
+
+    // Optional: Send email notification
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Password Changed - skillspocket",
+        template: "passwordChanged",
+        data: {
+          name: user.firstName,
+          timestamp: new Date().toLocaleString(),
+        },
+      });
+    } catch (emailError) {
+      logger.error(`Password change notification email failed: ${emailError.message}`);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+  } catch (error) {
+    logger.error(`Change password error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to change password',
+      error: error.message,
+    });
+  }
+};
+
 // @desc    Resend verification email
 // @route   POST /api/auth/resend-verification
 // @access  Public
@@ -351,6 +436,13 @@ exports.logout = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
     res.status(200).json({
       success: true,

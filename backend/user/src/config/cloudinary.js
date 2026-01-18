@@ -1,6 +1,12 @@
+
+// ============================================
+// FILE: backend/user/src/config/cloudinary.js
+// PRODUCTION-READY - Updated to use your env.js structure
+// ============================================
 const cloudinary = require('cloudinary').v2;
 const config = require('./env');
 const logger = require('../utils/logger');
+const fs = require('fs').promises;
 
 // Configure cloudinary
 if (config.cloudinary.cloudName && config.cloudinary.apiKey && config.cloudinary.apiSecret) {
@@ -10,9 +16,9 @@ if (config.cloudinary.cloudName && config.cloudinary.apiKey && config.cloudinary
     api_secret: config.cloudinary.apiSecret,
   });
   
-  logger.info('Cloudinary configured successfully');
+  logger.info('✅ Cloudinary configured successfully');
 } else {
-  logger.warn('Cloudinary credentials not found. File uploads will be disabled.');
+  logger.warn('⚠️ Cloudinary credentials not found. File uploads will be disabled.');
 }
 
 /**
@@ -23,10 +29,27 @@ if (config.cloudinary.cloudName && config.cloudinary.apiKey && config.cloudinary
  */
 const uploadToCloudinary = async (file, folder = 'skillspocket') => {
   try {
+    if (!config.cloudinary.cloudName || !config.cloudinary.apiKey) {
+      throw new Error('Cloudinary is not configured');
+    }
+
+    // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(file.path, {
       folder: folder,
       resource_type: 'auto',
+      transformation: file.fieldname === 'profilePicture' ? [
+        { width: 500, height: 500, crop: 'fill', gravity: 'face' },
+        { quality: 'auto' },
+        { fetch_format: 'auto' }
+      ] : undefined
     });
+    
+    // Delete local file after successful upload
+    try {
+      await fs.unlink(file.path);
+    } catch (unlinkError) {
+      logger.warn(`Failed to delete local file: ${unlinkError.message}`);
+    }
     
     return {
       url: result.secure_url,
@@ -37,6 +60,13 @@ const uploadToCloudinary = async (file, folder = 'skillspocket') => {
       size: result.bytes,
     };
   } catch (error) {
+    // Delete local file if upload fails
+    try {
+      await fs.unlink(file.path);
+    } catch (unlinkError) {
+      logger.warn(`Failed to delete local file after error: ${unlinkError.message}`);
+    }
+    
     logger.error(`Cloudinary upload error: ${error.message}`);
     throw new Error('File upload failed');
   }

@@ -1,14 +1,26 @@
 // ============================================
 // FILE: frontend/user/src/components/common/ProtectedRoute.jsx
 // ============================================
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export default function ProtectedRoute({ children, requiredRole, requiredUserType }) {
-  const { user, userType, loading } = useAuth();
+  const { user, userType, loading, isAuthenticated } = useAuth();
+
+  // ADD DEBUG LOGS
+  console.log('🛡️ ProtectedRoute Check:', {
+    loading,
+    isAuthenticated,
+    hasUser: !!user,
+    userType,
+    userRole: user?.role,
+    requiredRole,
+    requiredUserType
+  });
 
   // Show loading spinner while checking authentication
   if (loading) {
+    console.log('⏳ Still loading...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f6f7f8] dark:bg-bg-dark">
         <div className="text-center">
@@ -21,21 +33,23 @@ export default function ProtectedRoute({ children, requiredRole, requiredUserTyp
 
   // Redirect to login if not authenticated
   if (!user) {
+    console.log('❌ No user found, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   // Check userType if required (user vs admin)
   if (requiredUserType && userType !== requiredUserType) {
+    console.log('❌ Wrong userType, redirecting to unauthorized');
     return <Navigate to="/unauthorized" replace />;
   }
 
   // Check role if required (freelancer vs client)
   if (requiredRole && user.role !== requiredRole) {
-    // Redirect to appropriate dashboard based on their actual role
+    console.log('❌ Wrong role, redirecting to correct dashboard');
     const redirectPath = user.role === 'client' ? '/client/dashboard' : '/freelancer/dashboard';
     return <Navigate to={redirectPath} replace />;
   }
 
-  // All checks passed, render the protected content
+  console.log('✅ All checks passed, rendering protected content');
   return children;
 }

@@ -4,28 +4,39 @@
 const logger = require('../utils/logger');
 
 const handleNotificationEvents = (socket, io) => {
-  // Subscribe to notifications
-  socket.on('subscribe_notifications', () => {
-    socket.join(`notifications_${socket.userId}`);
-    logger.info(`User ${socket.userId} subscribed to notifications`);
+  // User comes online
+  socket.on('user_online', () => {
+    // Broadcast to all users that this user is online
+    socket.broadcast.emit('user_status_change', {
+      userId: socket.userId,
+      status: 'online',
+      lastSeen: new Date(),
+    });
+    logger.info(`User ${socket.userId} is online`);
   });
 
-  // Unsubscribe from notifications
-  socket.on('unsubscribe_notifications', () => {
-    socket.leave(`notifications_${socket.userId}`);
-    logger.info(`User ${socket.userId} unsubscribed from notifications`);
+  // User goes offline (handled in disconnect)
+  socket.on('disconnect', () => {
+    // Broadcast to all users that this user is offline
+    io.emit('user_status_change', {
+      userId: socket.userId,
+      status: 'offline',
+      lastSeen: new Date(),
+    });
   });
 
-  // Mark notification as read
-  socket.on('mark_notification_read', (notificationId) => {
-    logger.info(`Notification ${notificationId} marked as read by user ${socket.userId}`);
+  // Notification events
+  socket.on('send_notification', (data) => {
+    const { recipientId, type, message, metadata } = data;
+    
+    io.to(recipientId).emit('new_notification', {
+      type,
+      message,
+      metadata,
+      senderId: socket.userId,
+      timestamp: new Date(),
+    });
   });
 };
 
-// Helper function to emit notification to user
-const emitNotification = (io, userId, notification) => {
-  io.to(userId).emit('notification', notification);
-  io.to(`notifications_${userId}`).emit('notification', notification);
-};
-
-module.exports = { handleNotificationEvents, emitNotification };
+module.exports = { handleNotificationEvents };

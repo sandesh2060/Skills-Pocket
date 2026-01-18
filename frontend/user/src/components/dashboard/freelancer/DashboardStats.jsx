@@ -1,13 +1,58 @@
-// ============================================
-// FILE: frontend/user/src/components/dashboard/freelancer/DashboardStats.jsx
-// ============================================
-import React from 'react';
+import { useState, useEffect } from 'react';
+import transactionService from '../../../services/transactionService';
+import proposalService from '../../../services/proposalService';
 
 export default function DashboardStats() {
-  const stats = [
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalEarnings: 0,
+    activeJobs: 0,
+    pendingProposals: 0,
+    successRate: 0,
+  });
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch financial summary and proposals in parallel
+      const [financialData, proposalsData] = await Promise.all([
+        transactionService.getFinancialSummary(),
+        proposalService.getMyProposals({ limit: 100 }),
+      ]);
+
+      const totalEarnings = financialData.data?.totalReceived || 0;
+      
+      const proposals = proposalsData.data?.proposals || [];
+      const pendingProposals = proposals.filter(p => p.status === 'pending').length;
+      const acceptedProposals = proposals.filter(p => p.status === 'accepted').length;
+      const totalProposals = proposals.length;
+      
+      const successRate = totalProposals > 0 
+        ? Math.round((acceptedProposals / totalProposals) * 100) 
+        : 0;
+
+      setStats({
+        totalEarnings,
+        activeJobs: acceptedProposals,
+        pendingProposals,
+        successRate,
+      });
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statsConfig = [
     {
       label: 'Total Earnings',
-      value: '$12,450',
+      value: loading ? '...' : `$${stats.totalEarnings.toLocaleString()}`,
       change: '+12.5%',
       changeType: 'positive',
       icon: (
@@ -20,7 +65,7 @@ export default function DashboardStats() {
     },
     {
       label: 'Active Jobs',
-      value: '8',
+      value: loading ? '...' : stats.activeJobs,
       change: '+2 this week',
       changeType: 'neutral',
       icon: (
@@ -33,8 +78,8 @@ export default function DashboardStats() {
     },
     {
       label: 'Pending Proposals',
-      value: '5',
-      change: '3 awaiting response',
+      value: loading ? '...' : stats.pendingProposals,
+      change: `${stats.pendingProposals} awaiting response`,
       changeType: 'neutral',
       icon: (
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
@@ -46,7 +91,7 @@ export default function DashboardStats() {
     },
     {
       label: 'Success Rate',
-      value: '94%',
+      value: loading ? '...' : `${stats.successRate}%`,
       change: '+5% from last month',
       changeType: 'positive',
       icon: (
@@ -61,7 +106,7 @@ export default function DashboardStats() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {stats.map((stat, index) => (
+      {statsConfig.map((stat, index) => (
         <div
           key={index}
           className="bg-white dark:bg-slate-900 rounded-xl shadow-soft border border-[#e7edf3] dark:border-slate-800 p-6 hover:shadow-card transition-shadow"
@@ -70,7 +115,7 @@ export default function DashboardStats() {
             <div className={`w-12 h-12 rounded-lg ${stat.bgColor} flex items-center justify-center ${stat.iconColor}`}>
               {stat.icon}
             </div>
-            {stat.changeType === 'positive' && (
+            {stat.changeType === 'positive' && !loading && (
               <span className="text-xs font-semibold text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
                 {stat.change}
               </span>
@@ -84,7 +129,7 @@ export default function DashboardStats() {
             <p className="text-3xl font-bold text-[#0d141b] dark:text-white mb-2">
               {stat.value}
             </p>
-            {stat.changeType === 'neutral' && (
+            {stat.changeType === 'neutral' && !loading && (
               <p className="text-xs text-[#4c739a] dark:text-slate-400">
                 {stat.change}
               </p>

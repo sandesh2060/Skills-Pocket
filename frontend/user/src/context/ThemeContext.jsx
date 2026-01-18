@@ -15,23 +15,21 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    // Check localStorage first
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) return savedTheme;
-    
-    // Check system preference
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    
-    return 'light';
+    // Get theme from localStorage or default to 'light'
+    const saved = localStorage.getItem('theme');
+    return saved || 'light';
   });
 
   useEffect(() => {
-    // Update document class and localStorage
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
+    // Apply theme class to document
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    
+    // Save to localStorage
     localStorage.setItem('theme', theme);
   }, [theme]);
 
@@ -42,17 +40,8 @@ export const ThemeProvider = ({ children }) => {
   const setLightTheme = () => setTheme('light');
   const setDarkTheme = () => setTheme('dark');
 
-  const value = {
-    theme,
-    toggleTheme,
-    setLightTheme,
-    setDarkTheme,
-    isDark: theme === 'dark',
-    isLight: theme === 'light',
-  };
-
   return (
-    <ThemeContext.Provider value={value}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setLightTheme, setDarkTheme }}>
       {children}
     </ThemeContext.Provider>
   );

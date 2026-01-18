@@ -33,7 +33,7 @@ export default function ClientDashboard() {
     try {
       setLoading(true);
       setError('');
-      const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
       
       if (!token) {
         navigate('/login');

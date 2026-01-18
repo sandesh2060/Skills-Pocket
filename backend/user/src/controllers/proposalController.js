@@ -1,8 +1,11 @@
 // ============================================
 // FILE: backend/user/src/controllers/proposalController.js
+// FIXED VERSION - Added missing imports
 // ============================================
 const Proposal = require('../models/Proposal');
+const Job = require('../models/Job'); // ADDED - Missing import
 const Notification = require('../models/Notification');
+const logger = require('../utils/logger');
 const { createNotification } = require('../services/notificationService');
 
 // @desc    Submit proposal
@@ -62,16 +65,26 @@ exports.submitProposal = async (req, res) => {
     job.proposals.push(proposal._id);
     await job.save();
 
-    // Notify client
-    await createNotification({
-      user: job.client,
-      type: 'proposal_received',
-      title: 'New Proposal Received',
-      message: `You received a new proposal for "${job.title}"`,
-      link: `/jobs/${job._id}`,
-    });
+    // Notify client (wrapped in try-catch to not fail if notification fails)
+    try {
+      await createNotification({
+        user: job.client,
+        type: 'proposal_received',
+        title: 'New Proposal Received',
+        message: `You received a new proposal for "${job.title}"`,
+        link: `/jobs/${job._id}`,
+      });
+    } catch (notifError) {
+      logger.warn(`Failed to create notification: ${notifError.message}`);
+    }
 
     await proposal.populate('freelancer', 'firstName lastName profilePicture rating');
+
+    logger.info(`Proposal submitted successfully`, { 
+      proposalId: proposal._id, 
+      jobId, 
+      freelancerId: req.user.id 
+    });
 
     res.status(201).json({
       success: true,
@@ -79,11 +92,14 @@ exports.submitProposal = async (req, res) => {
       data: proposal,
     });
   } catch (error) {
-    logger.error(`Submit proposal error: ${error.message}`);
+    logger.error(`Submit proposal error: ${error.message}`, {
+      userId: req.user?.id,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to submit proposal',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
@@ -118,11 +134,15 @@ exports.getJobProposals = async (req, res) => {
       data: proposals,
     });
   } catch (error) {
-    logger.error(`Get job proposals error: ${error.message}`);
+    logger.error(`Get job proposals error: ${error.message}`, {
+      jobId: req.params.jobId,
+      userId: req.user?.id,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch proposals',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
@@ -163,11 +183,14 @@ exports.getMyProposals = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error(`Get my proposals error: ${error.message}`);
+    logger.error(`Get my proposals error: ${error.message}`, {
+      userId: req.user?.id,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch proposals',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
@@ -206,12 +229,21 @@ exports.acceptProposal = async (req, res) => {
     await job.save();
 
     // Notify freelancer
-    await createNotification({
-      user: proposal.freelancer,
-      type: 'proposal_accepted',
-      title: 'Proposal Accepted',
-      message: `Your proposal for "${job.title}" has been accepted!`,
-      link: `/jobs/${job._id}`,
+    try {
+      await createNotification({
+        user: proposal.freelancer,
+        type: 'proposal_accepted',
+        title: 'Proposal Accepted',
+        message: `Your proposal for "${job.title}" has been accepted!`,
+        link: `/jobs/${job._id}`,
+      });
+    } catch (notifError) {
+      logger.warn(`Failed to create notification: ${notifError.message}`);
+    }
+
+    logger.info(`Proposal accepted`, { 
+      proposalId: proposal._id, 
+      jobId: job._id 
     });
 
     res.status(200).json({
@@ -220,11 +252,15 @@ exports.acceptProposal = async (req, res) => {
       data: proposal,
     });
   } catch (error) {
-    logger.error(`Accept proposal error: ${error.message}`);
+    logger.error(`Accept proposal error: ${error.message}`, {
+      proposalId: req.params.id,
+      userId: req.user?.id,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to accept proposal',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
@@ -255,12 +291,20 @@ exports.rejectProposal = async (req, res) => {
     await proposal.save();
 
     // Notify freelancer
-    await createNotification({
-      user: proposal.freelancer,
-      type: 'proposal_rejected',
-      title: 'Proposal Update',
-      message: `Your proposal for "${proposal.job.title}" was not selected`,
-      link: `/proposals/${proposal._id}`,
+    try {
+      await createNotification({
+        user: proposal.freelancer,
+        type: 'proposal_rejected',
+        title: 'Proposal Update',
+        message: `Your proposal for "${proposal.job.title}" was not selected`,
+        link: `/proposals/${proposal._id}`,
+      });
+    } catch (notifError) {
+      logger.warn(`Failed to create notification: ${notifError.message}`);
+    }
+
+    logger.info(`Proposal rejected`, { 
+      proposalId: proposal._id 
     });
 
     res.status(200).json({
@@ -269,11 +313,15 @@ exports.rejectProposal = async (req, res) => {
       data: proposal,
     });
   } catch (error) {
-    logger.error(`Reject proposal error: ${error.message}`);
+    logger.error(`Reject proposal error: ${error.message}`, {
+      proposalId: req.params.id,
+      userId: req.user?.id,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to reject proposal',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
@@ -314,16 +362,24 @@ exports.withdrawProposal = async (req, res) => {
       $pull: { proposals: proposal._id },
     });
 
+    logger.info(`Proposal withdrawn`, { 
+      proposalId: proposal._id 
+    });
+
     res.status(200).json({
       success: true,
       message: 'Proposal withdrawn successfully',
     });
   } catch (error) {
-    logger.error(`Withdraw proposal error: ${error.message}`);
+    logger.error(`Withdraw proposal error: ${error.message}`, {
+      proposalId: req.params.id,
+      userId: req.user?.id,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to withdraw proposal',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };
