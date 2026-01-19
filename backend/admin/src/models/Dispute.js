@@ -9,124 +9,119 @@ const disputeSchema = new mongoose.Schema({
     ref: 'Job',
     required: true,
   },
-  client: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  freelancer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
   raisedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
   },
+  against: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  type: {
+    type: String,
+    enum: ['payment', 'quality', 'delivery', 'communication', 'other'],
+    required: true,
+  },
   title: {
     type: String,
-    required: [true, 'Dispute title is required'],
-    trim: true,
-    maxlength: [200, 'Title cannot exceed 200 characters'],
+    required: true,
+    maxlength: 200,
   },
   description: {
     type: String,
-    required: [true, 'Dispute description is required'],
-    maxlength: [2000, 'Description cannot exceed 2000 characters'],
-  },
-  category: {
-    type: String,
-    enum: [
-      'payment_issue',
-      'quality_issue',
-      'deadline_missed',
-      'scope_change',
-      'communication_issue',
-      'other',
-    ],
     required: true,
-  },
-  priority: {
-    type: String,
-    enum: ['low', 'medium', 'high', 'urgent'],
-    default: 'medium',
-  },
-  status: {
-    type: String,
-    enum: ['open', 'in_progress', 'resolved', 'closed'],
-    default: 'open',
+    maxlength: 2000,
   },
   evidence: [{
     type: {
       type: String,
-      enum: ['document', 'image', 'screenshot', 'other'],
+      enum: ['image', 'document', 'link'],
     },
     url: String,
-    publicId: String,
-    fileName: String,
     description: String,
-    uploadedAt: {
+  }],
+  status: {
+    type: String,
+    enum: ['pending', 'under_review', 'resolved', 'closed', 'escalated'],
+    default: 'pending',
+  },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'critical'],
+    default: 'medium',
+  },
+  assignedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin',
+  },
+  resolution: {
+    decision: {
+      type: String,
+      enum: ['favor_client', 'favor_freelancer', 'partial', 'dismissed'],
+    },
+    summary: String,
+    refundAmount: Number,
+    resolvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin',
+    },
+    resolvedAt: Date,
+  },
+  messages: [{
+    from: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'messages.fromModel',
+    },
+    fromModel: {
+      type: String,
+      enum: ['User', 'Admin'],
+    },
+    message: String,
+    attachments: [String],
+    createdAt: {
       type: Date,
       default: Date.now,
     },
   }],
-  messages: [{
-    sender: {
+  timeline: [{
+    event: String,
+    description: String,
+    by: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'messages.senderModel',
+      refPath: 'timeline.byModel',
     },
-    senderModel: {
+    byModel: {
       type: String,
       enum: ['User', 'Admin'],
-      required: true,
-    },
-    message: {
-      type: String,
-      required: true,
-      maxlength: [1000, 'Message cannot exceed 1000 characters'],
     },
     timestamp: {
       type: Date,
       default: Date.now,
     },
   }],
-  assignedTo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Admin',
-  },
-  resolution: {
-    type: String,
-    maxlength: [2000, 'Resolution cannot exceed 2000 characters'],
-  },
-  refundAmount: Number,
-  refundTransaction: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Transaction',
-  },
-  resolvedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Admin',
-  },
-  resolvedAt: Date,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
 }, {
   timestamps: true,
 });
 
 // Indexes
 disputeSchema.index({ job: 1 });
-disputeSchema.index({ client: 1 });
-disputeSchema.index({ freelancer: 1 });
+disputeSchema.index({ raisedBy: 1 });
 disputeSchema.index({ status: 1, priority: 1 });
 disputeSchema.index({ assignedTo: 1 });
 disputeSchema.index({ createdAt: -1 });
+
+// Add timeline entry
+disputeSchema.methods.addTimelineEvent = function(event, description, by, byModel) {
+  this.timeline.push({
+    event,
+    description,
+    by,
+    byModel,
+    timestamp: new Date(),
+  });
+  return this.save();
+};
 
 module.exports = mongoose.model('Dispute', disputeSchema);

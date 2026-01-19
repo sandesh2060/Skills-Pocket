@@ -1,24 +1,18 @@
 // ============================================
-// FILE: backend/admin/src/routes/disputeRoutes.js
+// FILE 5: backend/admin/src/routes/disputeRoutes.js
+// FIXED: Proper route structure
 // ============================================
 const express = require('express');
-const {
-  getAllDisputes,
-  getDisputeById,
-  assignDispute,
-  resolveDispute,
-  addDisputeMessage,
-} = require('../controllers/disputeController');
-const { protect, authorize } = require('../middlewares/adminAuth');
-
 const router = express.Router();
+const disputeController = require('../controllers/disputeController');
+const { adminAuth } = require('../middlewares/adminAuth');
 
-router.use(protect, authorize('manage_disputes'));
+router.use(adminAuth);
 
-router.get('/', getAllDisputes);
-router.get('/:disputeId', getDisputeById);
-router.put('/:disputeId/assign', assignDispute);
-router.put('/:disputeId/resolve', resolveDispute);
-router.post('/:disputeId/messages', addDisputeMessage);
+// Match the frontend's expected route
+router.get('/disputes', disputeController.getSupportTickets);
+router.get('/disputes/:ticketId', disputeController.getTicketById);
+router.put('/disputes/:ticketId/status', disputeController.updateTicketStatus);
+router.post('/disputes/:ticketId/respond', disputeController.respondToTicket);
 
 module.exports = router;

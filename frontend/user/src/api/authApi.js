@@ -146,6 +146,17 @@ export const logout = async () => {
 };
 
 /**
+ * Change password
+ */
+export const changePassword = async (currentPassword, newPassword) => {
+  const response = await userApi.put('/auth/change-password', {
+    currentPassword,
+    newPassword,
+  });
+  return response.data;
+};
+
+/**
  * Get current user/admin
  * WITH RETRY PREVENTION - Won't spam requests when offline
  */

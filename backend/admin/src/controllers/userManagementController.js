@@ -1,15 +1,11 @@
 // ============================================
 // FILE: backend/admin/src/controllers/userManagementController.js
 // ============================================
-const User = require('../models/User');
-const Job = require('../models/Job');
-const Proposal = require('../models/Proposal');
-const Transaction = require('../models/Transaction');
-const logger = require('../utils/logger');
+const User = require('../../../user/src/models/User');
+const Job = require('../../../user/src/models/Job');
+const Transaction = require('../../../user/src/models/Transaction');
+const { sendResponse, sendError } = require('../utils/responseHandler');
 
-// @desc    Get all users with filters
-// @route   GET /api/admin/users
-// @access  Private (Admin)
 exports.getAllUsers = async (req, res) => {
   try {
     const {
@@ -26,190 +22,171 @@ exports.getAllUsers = async (req, res) => {
 
     if (role) query.role = role;
     if (status === 'active') query.isActive = true;
+    if (status === 'suspended') query.isSuspended = true;
     if (status === 'inactive') query.isActive = false;
-    if (status === 'verified') query.isVerified = true;
-    if (status === 'unverified') query.isVerified = false;
-    
+
     if (search) {
       query.$or = [
-        { firstName: { $regex: search, $options: 'i' } },
-        { lastName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { firstName: new RegExp(search, 'i') },
+        { lastName: new RegExp(search, 'i') },
+        { email: new RegExp(search, 'i') },
       ];
     }
 
     const users = await User.find(query)
-      .select('-password')
       .sort({ [sortBy]: order === 'desc' ? -1 : 1 })
       .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .skip((page - 1) * limit)
+      .select('-password');
 
-    const count = await User.countDocuments(query);
+    const total = await User.countDocuments(query);
 
-    res.status(200).json({
-      success: true,
-      data: {
-        users,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(count / limit),
-          totalUsers: count,
-          hasNext: page * limit < count,
-          hasPrev: page > 1,
-        },
-      },
-    });
+    sendResponse(res, {
+      users,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+      totalUsers: total,
+    }, 'Users retrieved successfully');
+
   } catch (error) {
-    logger.error(`Get users error: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching users',
-    });
+    console.error('Get users error:', error);
+    sendError(res, 'Failed to retrieve users', 500);
   }
 };
 
-// @desc    Get user by ID with detailed info
-// @route   GET /api/admin/users/:userId
-// @access  Private (Admin)
 exports.getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId).select('-password');
+    const user = await User.findById(req.params.id).select('-password');
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
+      return sendError(res, 'User not found', 404);
     }
 
-    // Get additional stats
-    const [jobsPosted, proposalsSubmitted, transactions] = await Promise.all([
-      Job.countDocuments({ client: user._id }),
-      Proposal.countDocuments({ freelancer: user._id }),
-      Transaction.find({ $or: [{ sender: user._id }, { recipient: user._id }] })
-        .limit(10)
-        .sort({ createdAt: -1 }),
-    ]);
+    const jobsPosted = user.role === 'client' 
+      ? await Job.countDocuments({ client: user._id })
+      : 0;
 
-    res.status(200).json({
-      success: true,
-      data: {
-        user,
-        stats: {
-          jobsPosted,
-          proposalsSubmitted,
-          recentTransactions: transactions,
-        },
+    const jobsCompleted = user.role === 'freelancer'
+      ? await Job.countDocuments({ hiredFreelancer: user._id, status: 'completed' })
+      : 0;
+
+    const transactions = await Transaction.find({
+      $or: [{ from: user._id }, { to: user._id }],
+    }).limit(10).sort('-createdAt');
+
+    sendResponse(res, {
+      user,
+      stats: {
+        jobsPosted,
+        jobsCompleted,
+        recentTransactions: transactions,
       },
-    });
+    }, 'User details retrieved');
+
   } catch (error) {
-    logger.error(`Get user error: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching user',
-    });
+    console.error('Get user error:', error);
+    sendError(res, 'Failed to get user', 500);
   }
 };
 
-// @desc    Suspend/Unsuspend user
-// @route   PUT /api/admin/users/:userId/suspend
-// @access  Private (Admin)
-exports.toggleUserSuspension = async (req, res) => {
+exports.suspendUser = async (req, res) => {
   try {
     const { reason } = req.body;
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(req.params.id);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
+      return sendError(res, 'User not found', 404);
     }
 
-    user.isActive = !user.isActive;
-    user.suspensionReason = user.isActive ? undefined : reason;
+    user.isSuspended = true;
+    user.suspensionReason = reason;
     await user.save();
 
-    logger.info(`User ${user.isActive ? 'activated' : 'suspended'}: ${user.email} by admin: ${req.admin.email}`);
+    await req.admin.logActivity(
+      'suspend_user',
+      `Suspended user ${user.email}. Reason: ${reason}`,
+      req.ip
+    );
 
-    res.status(200).json({
-      success: true,
-      message: `User ${user.isActive ? 'activated' : 'suspended'} successfully`,
-      data: user,
-    });
+    sendResponse(res, user, 'User suspended successfully');
+
   } catch (error) {
-    logger.error(`Toggle user suspension error: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: 'Error updating user status',
-    });
+    console.error('Suspend user error:', error);
+    sendError(res, 'Failed to suspend user', 500);
   }
 };
 
-// @desc    Delete user account
-// @route   DELETE /api/admin/users/:userId
-// @access  Private (Super Admin)
+exports.unsuspendUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return sendError(res, 'User not found', 404);
+    }
+
+    user.isSuspended = false;
+    user.suspensionReason = null;
+    await user.save();
+
+    await req.admin.logActivity(
+      'unsuspend_user',
+      `Unsuspended user ${user.email}`,
+      req.ip
+    );
+
+    sendResponse(res, user, 'User unsuspended successfully');
+
+  } catch (error) {
+    console.error('Unsuspend user error:', error);
+    sendError(res, 'Failed to unsuspend user', 500);
+  }
+};
+
 exports.deleteUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(req.params.id);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
+      return sendError(res, 'User not found', 404);
     }
 
-    // Soft delete - mark as deleted instead of removing
-    user.isDeleted = true;
-    user.deletedAt = Date.now();
-    user.deletedBy = req.admin.id;
-    await user.save();
+    await user.deleteOne();
 
-    logger.warn(`User deleted: ${user.email} by admin: ${req.admin.email}`);
+    await req.admin.logActivity(
+      'delete_user',
+      `Deleted user ${user.email}`,
+      req.ip
+    );
 
-    res.status(200).json({
-      success: true,
-      message: 'User deleted successfully',
-    });
+    sendResponse(res, null, 'User deleted successfully');
+
   } catch (error) {
-    logger.error(`Delete user error: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting user',
-    });
+    console.error('Delete user error:', error);
+    sendError(res, 'Failed to delete user', 500);
   }
 };
 
-// @desc    Verify user manually
-// @route   PUT /api/admin/users/:userId/verify
-// @access  Private (Admin)
 exports.verifyUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(req.params.id);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
+      return sendError(res, 'User not found', 404);
     }
 
     user.isVerified = true;
     await user.save();
 
-    logger.info(`User verified manually: ${user.email} by admin: ${req.admin.email}`);
+    await req.admin.logActivity(
+      'verify_user',
+      `Verified user ${user.email}`,
+      req.ip
+    );
 
-    res.status(200).json({
-      success: true,
-      message: 'User verified successfully',
-      data: user,
-    });
+    sendResponse(res, user, 'User verified successfully');
+
   } catch (error) {
-    logger.error(`Verify user error: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: 'Error verifying user',
-    });
+    console.error('Verify user error:', error);
+    sendError(res, 'Failed to verify user', 500);
   }
 };

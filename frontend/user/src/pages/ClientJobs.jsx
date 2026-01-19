@@ -1,11 +1,12 @@
 // ============================================
 // FILE: frontend/user/src/pages/ClientJobs.jsx
+// Updated with Dark Mode Support
 // ============================================
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ClientSidebar from "../components/dashboard/client/ClientSidebar";
 import ClientNavbar from "../components/dashboard/client/ClientNavbar";
-import api from '../services/api'; // ✅ CHANGE THIS LINE
+import api from '../services/api';
 
 export default function ClientJobs() {
   const navigate = useNavigate();
@@ -43,10 +44,7 @@ export default function ClientJobs() {
         params.status = filter === 'in-progress' ? 'in_progress' : filter;
       }
       
-      // ✅ CHANGE THIS - use api instead of axios
       const response = await api.get('/jobs/my-jobs', { params });
-
-      console.log('API Response:', response.data);
 
       if (response.data.success && response.data.data) {
         setJobs(response.data.data.jobs || []);
@@ -79,7 +77,6 @@ export default function ClientJobs() {
         }
       };
 
-      // ✅ CHANGE THIS - use api instead of axios
       await api.post('/jobs', jobData);
 
       setSuccess('Job posted successfully!');
@@ -107,7 +104,6 @@ export default function ClientJobs() {
     if (!confirm('Are you sure you want to delete this job?')) return;
 
     try {
-      // ✅ CHANGE THIS - use api instead of axios
       await api.delete(`/jobs/${jobId}`);
       
       setSuccess('Job deleted successfully');
@@ -121,14 +117,14 @@ export default function ClientJobs() {
 
   const getStatusColor = (status) => {
     const colors = {
-      open: 'bg-green-100 text-green-800',
-      'in_progress': 'bg-blue-100 text-blue-800',
-      'in-progress': 'bg-blue-100 text-blue-800', // Support both formats
-      completed: 'bg-gray-100 text-gray-800',
-      closed: 'bg-red-100 text-red-800',
-      cancelled: 'bg-red-100 text-red-800'
+      open: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+      'in_progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+      'in-progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+      completed: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+      closed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+      cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
   };
 
   const getStatusDisplay = (status) => {
@@ -143,8 +139,6 @@ export default function ClientJobs() {
     return displays[status] || status;
   };
 
-  // ✅ FIX: No need to filter again if backend already filtered by status
-  // But keep it for 'all' filter
   const filteredJobs = filter === 'all' 
     ? jobs 
     : jobs.filter(job => {
@@ -153,11 +147,11 @@ export default function ClientJobs() {
       });
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f8fafc]">
+    <div className="flex h-screen overflow-hidden bg-[#f8fafc] dark:bg-bg-dark">
       <ClientSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -167,12 +161,12 @@ export default function ClientJobs() {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">My Posted Jobs</h1>
-              <p className="text-slate-600 mt-1">Manage and track your job postings</p>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">My Posted Jobs</h1>
+              <p className="text-slate-600 dark:text-slate-400 mt-1">Manage and track your job postings</p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -183,9 +177,9 @@ export default function ClientJobs() {
 
           {/* Alerts */}
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 flex justify-between items-center">
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-800 dark:text-red-400 flex justify-between items-center">
               <span>{error}</span>
-              <button onClick={() => setError('')} className="text-red-600 hover:text-red-800">
+              <button onClick={() => setError('')} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -193,9 +187,9 @@ export default function ClientJobs() {
             </div>
           )}
           {success && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 flex justify-between items-center">
+            <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-800 dark:text-green-400 flex justify-between items-center">
               <span>{success}</span>
-              <button onClick={() => setSuccess('')} className="text-green-600 hover:text-green-800">
+              <button onClick={() => setSuccess('')} className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -211,8 +205,8 @@ export default function ClientJobs() {
                 onClick={() => setFilter(status)}
                 className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
                   filter === status
-                    ? 'bg-primary text-white'
-                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
                 {status === 'all' ? 'All Jobs' : status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
@@ -224,20 +218,20 @@ export default function ClientJobs() {
           {loading ? (
             <div className="grid gap-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-xl p-6 border animate-pulse">
-                  <div className="h-6 bg-slate-200 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-slate-200 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-slate-200 rounded w-2/3"></div>
+                <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 animate-pulse">
+                  <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-4"></div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full mb-2"></div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div>
                 </div>
               ))}
             </div>
           ) : filteredJobs.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 border text-center">
-              <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-12 border border-slate-200 dark:border-slate-700 text-center">
+              <svg className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">No jobs found</h3>
-              <p className="text-slate-600 mb-4">
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No jobs found</h3>
+              <p className="text-slate-600 dark:text-slate-400 mb-4">
                 {filter === 'all' 
                   ? 'Start by posting your first job' 
                   : `No ${filter} jobs found`
@@ -245,7 +239,7 @@ export default function ClientJobs() {
               </p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
+                className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 shadow-lg shadow-primary/20"
               >
                 Post a Job
               </button>
@@ -253,27 +247,27 @@ export default function ClientJobs() {
           ) : (
             <div className="grid gap-4">
               {filteredJobs.map((job) => (
-                <div key={job._id} className="bg-white rounded-xl p-6 border hover:shadow-md transition-all">
+                <div key={job._id} className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-md dark:hover:shadow-card-dark transition-all">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold text-slate-900">{job.title}</h3>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">{job.title}</h3>
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(job.status)}`}>
                           {getStatusDisplay(job.status)}
                         </span>
                       </div>
-                      <p className="text-slate-600 mb-4 line-clamp-2">{job.description}</p>
+                      <p className="text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">{job.description}</p>
                       
                       {/* Skills */}
                       {job.skills && job.skills.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-4">
                           {job.skills.slice(0, 5).map((skill, idx) => (
-                            <span key={idx} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-sm">
+                            <span key={idx} className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
                               {skill}
                             </span>
                           ))}
                           {job.skills.length > 5 && (
-                            <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-sm">
+                            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm">
                               +{job.skills.length - 5} more
                             </span>
                           )}
@@ -281,7 +275,7 @@ export default function ClientJobs() {
                       )}
 
                       {/* Meta Info */}
-                      <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+                      <div className="flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-400">
                         <span className="flex items-center gap-1">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -309,13 +303,13 @@ export default function ClientJobs() {
                     <div className="flex gap-2 ml-4">
                       <button
                         onClick={() => navigate(`/client/jobs/${job._id}`)}
-                        className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors"
+                        className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                       >
                         View
                       </button>
                       <button
                         onClick={() => handleDeleteJob(job._id)}
-                        className="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors"
+                        className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg font-medium hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                       >
                         Delete
                       </button>
@@ -328,7 +322,7 @@ export default function ClientJobs() {
 
           {/* Pagination Info */}
           {pagination && pagination.totalJobs > 0 && (
-            <div className="mt-6 text-center text-sm text-slate-600">
+            <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
               Showing {filteredJobs.length} of {pagination.totalJobs} jobs
             </div>
           )}
@@ -337,16 +331,16 @@ export default function ClientJobs() {
 
       {/* Create Job Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800 z-10">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Post a New Job</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Post a New Job</h2>
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -356,38 +350,38 @@ export default function ClientJobs() {
             <form onSubmit={handleCreateJob} className="p-6 space-y-6">
               {/* Title */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Job Title *</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Job Title *</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
                   placeholder="e.g., Build a React Dashboard"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Description *</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Description *</label>
                 <textarea
                   required
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                   rows={5}
                   placeholder="Describe your project in detail..."
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none"
+                  className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none"
                 />
               </div>
 
               {/* Category */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Category *</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Category *</label>
                 <select
                   required
                   value={formData.category}
                   onChange={(e) => setFormData({...formData, category: e.target.value})}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                 >
                   <option value="">Select category</option>
                   <option value="Web Development">Web Development</option>
@@ -401,39 +395,39 @@ export default function ClientJobs() {
 
               {/* Skills */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Required Skills *</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Required Skills *</label>
                 <input
                   type="text"
                   required
                   value={formData.skills}
                   onChange={(e) => setFormData({...formData, skills: e.target.value})}
                   placeholder="React, Node.js, MongoDB (comma-separated)"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                 />
               </div>
 
               {/* Budget */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Min Budget ($) *</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Min Budget ($) *</label>
                   <input
                     type="number"
                     required
                     value={formData.budgetMin}
                     onChange={(e) => setFormData({...formData, budgetMin: e.target.value})}
                     placeholder="500"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Max Budget ($) *</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Max Budget ($) *</label>
                   <input
                     type="number"
                     required
                     value={formData.budgetMax}
                     onChange={(e) => setFormData({...formData, budgetMax: e.target.value})}
                     placeholder="1000"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                   />
                 </div>
               </div>
@@ -441,22 +435,22 @@ export default function ClientJobs() {
               {/* Duration & Experience */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Duration *</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Duration *</label>
                   <input
                     type="text"
                     required
                     value={formData.duration}
                     onChange={(e) => setFormData({...formData, duration: e.target.value})}
                     placeholder="e.g., 1-2 weeks"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Experience Level *</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Experience Level *</label>
                   <select
                     value={formData.experienceLevel}
                     onChange={(e) => setFormData({...formData, experienceLevel: e.target.value})}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                   >
                     <option value="entry">Entry Level</option>
                     <option value="intermediate">Intermediate</option>
@@ -467,11 +461,11 @@ export default function ClientJobs() {
 
               {/* Project Type */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Project Type *</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Project Type *</label>
                 <select
                   value={formData.projectType}
                   onChange={(e) => setFormData({...formData, projectType: e.target.value})}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                 >
                   <option value="fixed">Fixed Price</option>
                   <option value="hourly">Hourly Rate</option>
@@ -483,13 +477,13 @@ export default function ClientJobs() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-6 py-3 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors"
+                  className="flex-1 px-6 py-3 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 rounded-xl font-semibold hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+                  className="flex-1 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                 >
                   Post Job
                 </button>

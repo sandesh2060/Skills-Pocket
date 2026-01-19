@@ -201,7 +201,6 @@ exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    // Validate input
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
         success: false,
@@ -209,8 +208,16 @@ exports.changePassword = async (req, res) => {
       });
     }
 
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 8 characters',
+      });
+    }
+
     // Get user with password
     const user = await User.findById(req.user.id).select('+password');
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -219,27 +226,12 @@ exports.changePassword = async (req, res) => {
     }
 
     // Verify current password
-    const isPasswordMatch = await user.comparePassword(currentPassword);
-    if (!isPasswordMatch) {
+    const isPasswordValid = await user.comparePassword(currentPassword);
+
+    if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
         message: 'Current password is incorrect',
-      });
-    }
-
-    // Check if new password is same as current
-    if (currentPassword === newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'New password must be different from current password',
-      });
-    }
-
-    // Validate new password strength
-    if (newPassword.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: 'New password must be at least 8 characters long',
       });
     }
 
@@ -247,33 +239,21 @@ exports.changePassword = async (req, res) => {
     user.password = newPassword;
     await user.save();
 
-    logger.info(`Password changed successfully for user: ${user._id}`);
-
-    // Optional: Send email notification
-    try {
-      await sendEmail({
-        to: user.email,
-        subject: "Password Changed - skillspocket",
-        template: "passwordChanged",
-        data: {
-          name: user.firstName,
-          timestamp: new Date().toLocaleString(),
-        },
-      });
-    } catch (emailError) {
-      logger.error(`Password change notification email failed: ${emailError.message}`);
-    }
+    logger.info(`Password changed for user: ${user._id}`);
 
     res.status(200).json({
       success: true,
       message: 'Password changed successfully',
     });
   } catch (error) {
-    logger.error(`Change password error: ${error.message}`);
+    logger.error(`Change password error: ${error.message}`, {
+      userId: req.user?.id,
+      stack: error.stack,
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to change password',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Server error',
     });
   }
 };

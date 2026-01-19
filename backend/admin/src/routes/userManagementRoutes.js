@@ -1,25 +1,25 @@
 // ============================================
-// FILE: backend/admin/src/routes/userManagementRoutes.js
+// FILE 6: backend/admin/src/routes/userManagementRoutes.js
+// FIXED: Consistent middleware usage
 // ============================================
 const express = require('express');
+const router = express.Router();
 const {
   getAllUsers,
   getUserById,
-  toggleUserSuspension,
+  suspendUser,
+  unsuspendUser,
   deleteUser,
   verifyUser,
 } = require('../controllers/userManagementController');
-const { protect, authorize } = require('../middlewares/adminAuth');
+const { adminAuth } = require('../middlewares/adminAuth');
 
-const router = express.Router();
-
-router.use(protect);
-
-router.get('/', authorize('manage_users'), getAllUsers);
-router.get('/:userId', authorize('manage_users'), getUserById);
-router.put('/:userId/suspend', authorize('manage_users'), toggleUserSuspension);
-router.put('/:userId/verify', authorize('manage_users'), verifyUser);
-router.delete('/:userId', authorize('manage_admins'), deleteUser); // Super admin only
+// Use adminAuth consistently
+router.get('/', adminAuth, getAllUsers);
+router.get('/:id', adminAuth, getUserById);
+router.patch('/:id/suspend', adminAuth, suspendUser);
+router.patch('/:id/unsuspend', adminAuth, unsuspendUser);
+router.patch('/:id/verify', adminAuth, verifyUser);
+router.delete('/:id', adminAuth, deleteUser);
 
 module.exports = router;
-

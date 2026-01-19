@@ -1,6 +1,6 @@
 // ============================================
 // FILE: frontend/user/src/App.jsx
-// UPDATED - Added Browse Jobs Route
+// UPDATED - Added Notification Routes
 // ============================================
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
@@ -19,6 +19,9 @@ import FreelancerMessages from "./pages/FreelancerMessages";
 import FreelancerWallet from "./pages/FreelancerWallet";
 import FreelancerProfile from "./pages/FreelancerProfile";
 import FreelancerJobDetails from "./pages/FreelancerJobDetails";
+import FreelancerSettings from "./pages/FreelancerSettings";
+import FreelancerHelp from "./pages/FreelancerHelp";
+import FreelancerNotifications from "./pages/FreelancerNotifications"; // ✅ NEW
 
 // Client Pages
 import ClientDashboard from "./pages/ClientDashboard";
@@ -28,6 +31,7 @@ import ClientInbox from "./pages/ClientInbox";
 import ClientFinances from "./pages/ClientFinances";
 import ClientHelp from "./pages/ClientHelp";
 import ClientSettings from "./pages/ClientSettings";
+import ClientNotifications from "./pages/ClientNotifications"; // ✅ NEW
 
 // Public Pages
 const Home = () => <Login />;
@@ -148,6 +152,31 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/freelancer/settings"
+          element={
+            <ProtectedRoute requiredRole="freelancer" requiredUserType="user">
+              <FreelancerSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/freelancer/help"
+          element={
+            <ProtectedRoute requiredRole="freelancer" requiredUserType="user">
+              <FreelancerHelp />
+            </ProtectedRoute>
+          }
+        />
+        {/* ✅ NEW - Freelancer Notifications Route */}
+        <Route
+          path="/freelancer/notifications"
+          element={
+            <ProtectedRoute requiredRole="freelancer" requiredUserType="user">
+              <FreelancerNotifications />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Client Routes */}
         <Route
@@ -203,6 +232,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="client" requiredUserType="user">
               <ClientSettings />
+            </ProtectedRoute>
+          }
+        />
+        {/* ✅ NEW - Client Notifications Route */}
+        <Route
+          path="/client/notifications"
+          element={
+            <ProtectedRoute requiredRole="client" requiredUserType="user">
+              <ClientNotifications />
             </ProtectedRoute>
           }
         />

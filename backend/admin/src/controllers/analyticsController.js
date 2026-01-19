@@ -1,169 +1,224 @@
 // ============================================
-// FILE: backend/admin/src/controllers/analyticsController.js
+// FILE 2: backend/admin/src/controllers/analyticsController.js
+// FIXED: Proper timeouts, error handling, and indexes
 // ============================================
-const User = require('../models/User');
-const Job = require('../models/Job');
-const Transaction = require('../models/Transaction');
-const Proposal = require('../models/Proposal');
-const logger = require('../utils/logger');
+const { User, Job, Transaction } = require('../models');
 
-// @desc    Get platform analytics
-// @route   GET /api/admin/analytics
-// @access  Private (Admin)
-exports.getPlatformAnalytics = async (req, res) => {
+// Helper to add timeout to queries
+const withTimeout = (promise, timeoutMs = 5000) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
+    )
+  ]);
+};
+
+exports.getDashboardStats = async (req, res) => {
   try {
-    const { period = '30d' } = req.query;
+    console.log('📊 Fetching dashboard stats...');
 
-    // Calculate date range
-    const periodDays = parseInt(period) || 30;
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - periodDays);
+    const now = new Date();
+    const lastMonth = new Date(now);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
 
-    // Parallel queries for better performance
+    // Run queries with timeout protection
     const [
       totalUsers,
-      totalJobs,
-      totalTransactions,
-      newUsersCount,
-      activeJobsCount,
-      completedJobsCount,
-      totalRevenue,
-      usersByRole,
-      jobsByCategory,
-      recentTransactions,
+      activeJobs,
+      revenueResult,
+      escrowResult
     ] = await Promise.all([
-      User.countDocuments(),
-      Job.countDocuments(),
-      Transaction.countDocuments(),
-      User.countDocuments({ createdAt: { $gte: startDate } }),
-      Job.countDocuments({ status: 'open' }),
-      Job.countDocuments({ status: 'completed' }),
-      Transaction.aggregate([
-        { $match: { status: 'completed', type: 'payment' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-      ]),
-      User.aggregate([
-        { $group: { _id: '$role', count: { $count: {} } } },
-      ]),
-      Job.aggregate([
-        { $group: { _id: '$category', count: { $count: {} } } },
-      ]),
-      Transaction.find()
-        .sort({ createdAt: -1 })
-        .limit(10)
-        .populate('from', 'firstName lastName')
-        .populate('to', 'firstName lastName'),
+      withTimeout(User.countDocuments()),
+      withTimeout(Job.countDocuments({ status: { $in: ['active', 'in_progress'] } })),
+      withTimeout(Transaction.aggregate([
+        { $match: { type: 'payment', status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ])),
+      withTimeout(Transaction.aggregate([
+        { $match: { type: 'escrow', status: 'held' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]))
     ]);
 
-    // User growth data
-    const userGrowth = await User.aggregate([
-      { $match: { createdAt: { $gte: startDate } } },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          count: { $count: {} },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
+    console.log('✅ Stats fetched successfully');
 
-    // Revenue trend
-    const revenueTrend = await Transaction.aggregate([
-      {
-        $match: {
-          status: 'completed',
+    // Get comparison data
+    const [lastMonthUsers, lastMonthJobs, lastMonthRevenueResult] = await Promise.all([
+      withTimeout(User.countDocuments({ createdAt: { $lt: lastMonth } })),
+      withTimeout(Job.countDocuments({ 
+        status: { $in: ['active', 'in_progress'] },
+        createdAt: { $lt: lastMonth }
+      })),
+      withTimeout(Transaction.aggregate([
+        { $match: { 
           type: 'payment',
-          createdAt: { $gte: startDate },
-        },
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          revenue: { $sum: '$amount' },
-        },
-      },
-      { $sort: { _id: 1 } },
+          status: 'completed',
+          createdAt: { $lt: lastMonth }
+        }},
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]))
     ]);
 
-    res.status(200).json({
+    const calculateTrend = (current, previous) => {
+      if (previous === 0) return { trend: 'up', trendValue: '100%' };
+      const change = ((current - previous) / previous) * 100;
+      return {
+        trend: change >= 0 ? 'up' : 'down',
+        trendValue: `${Math.abs(change).toFixed(1)}%`
+      };
+    };
+
+    const currentRevenue = revenueResult[0]?.total || 0;
+    const lastMonthRevenue = lastMonthRevenueResult[0]?.total || 0;
+
+    res.json({
       success: true,
       data: {
-        overview: {
-          totalUsers,
-          totalJobs,
-          totalTransactions,
-          newUsers: newUsersCount,
-          activeJobs: activeJobsCount,
-          completedJobs: completedJobsCount,
-          totalRevenue: totalRevenue[0]?.total || 0,
+        totalUsers: {
+          value: totalUsers,
+          ...calculateTrend(totalUsers, lastMonthUsers)
         },
-        usersByRole,
-        jobsByCategory,
-        userGrowth,
-        revenueTrend,
-        recentTransactions,
-      },
+        activeJobs: {
+          value: activeJobs,
+          ...calculateTrend(activeJobs, lastMonthJobs)
+        },
+        totalRevenue: {
+          value: currentRevenue,
+          ...calculateTrend(currentRevenue, lastMonthRevenue)
+        },
+        escrowBalance: {
+          value: escrowResult[0]?.total || 0,
+          trend: 'stable',
+          trendValue: '0%'
+        }
+      }
     });
   } catch (error) {
-    logger.error(`Get analytics error: ${error.message}`);
+    console.error('❌ Dashboard stats error:', error.message);
+    
+    if (error.message === 'Query timeout') {
+      return res.status(504).json({
+        success: false,
+        error: 'Database query took too long. Please try again.',
+        code: 'QUERY_TIMEOUT'
+      });
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Error fetching analytics',
+      error: 'Failed to fetch dashboard statistics',
+      code: 'STATS_ERROR',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// @desc    Get financial analytics
-// @route   GET /api/admin/analytics/financial
-// @access  Private (Admin)
-exports.getFinancialAnalytics = async (req, res) => {
+exports.getRevenueData = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { range = '30d' } = req.query;
+    const days = parseInt(range.replace('d', '')) || 30;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
 
-    const dateFilter = {};
-    if (startDate) dateFilter.$gte = new Date(startDate);
-    if (endDate) dateFilter.$lte = new Date(endDate);
+    console.log('📊 Fetching revenue data...');
 
-    const [paymentStats, withdrawalStats, escrowBalance] = await Promise.all([
+    const revenueData = await withTimeout(
       Transaction.aggregate([
-        { $match: { type: 'payment', ...(Object.keys(dateFilter).length && { createdAt: dateFilter }) } },
+        {
+          $match: {
+            type: 'payment',
+            status: 'completed',
+            createdAt: { $gte: startDate }
+          }
+        },
         {
           $group: {
-            _id: '$status',
-            count: { $count: {} },
-            total: { $sum: '$amount' },
-          },
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            revenue: { $sum: '$amount' }
+          }
         },
-      ]),
-      Transaction.aggregate([
-        { $match: { type: 'withdrawal', ...(Object.keys(dateFilter).length && { createdAt: dateFilter }) } },
+        { $sort: { _id: 1 } },
         {
-          $group: {
-            _id: '$status',
-            count: { $count: {} },
-            total: { $sum: '$amount' },
-          },
-        },
-      ]),
-      Transaction.aggregate([
-        { $match: { status: 'escrow' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-      ]),
-    ]);
+          $project: {
+            date: '$_id',
+            revenue: 1,
+            _id: 0
+          }
+        }
+      ])
+    );
 
-    res.status(200).json({
+    console.log('✅ Revenue data fetched:', revenueData.length, 'records');
+
+    res.json({
       success: true,
-      data: {
-        payments: paymentStats,
-        withdrawals: withdrawalStats,
-        escrowBalance: escrowBalance[0]?.total || 0,
-      },
+      data: revenueData
     });
   } catch (error) {
-    logger.error(`Get financial analytics error: ${error.message}`);
+    console.error('❌ Revenue data error:', error.message);
+    
+    if (error.message === 'Query timeout') {
+      return res.status(504).json({
+        success: false,
+        error: 'Database query took too long',
+        code: 'QUERY_TIMEOUT'
+      });
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Error fetching financial analytics',
+      error: 'Failed to fetch revenue data',
+      code: 'REVENUE_ERROR'
+    });
+  }
+};
+
+exports.getJobDistribution = async (req, res) => {
+  try {
+    console.log('📊 Fetching job distribution...');
+
+    const distribution = await withTimeout(
+      Job.aggregate([
+        { $match: { status: { $in: ['active', 'in_progress'] } } },
+        {
+          $group: {
+            _id: '$category',
+            count: { $sum: 1 }
+          }
+        },
+        {
+          $project: {
+            category: { $toUpper: '$_id' },
+            count: 1,
+            _id: 0
+          }
+        },
+        { $sort: { count: -1 } }
+      ])
+    );
+
+    console.log('✅ Job distribution fetched:', distribution.length, 'categories');
+
+    res.json({
+      success: true,
+      data: distribution
+    });
+  } catch (error) {
+    console.error('❌ Job distribution error:', error.message);
+    
+    if (error.message === 'Query timeout') {
+      return res.status(504).json({
+        success: false,
+        error: 'Database query took too long',
+        code: 'QUERY_TIMEOUT'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch job distribution',
+      code: 'DISTRIBUTION_ERROR'
     });
   }
 };

@@ -1,213 +1,190 @@
 // ============================================
-// FILE: backend/admin/src/controllers/disputeController.js
+// FILE 3: backend/admin/src/controllers/disputeController.js
+// FIXED: Proper error handling + ALL exports
 // ============================================
-const Dispute = require('../models/Dispute');
-const Job = require('../models/Job');
-const Transaction = require('../models/Transaction');
-const logger = require('../utils/logger');
+const Ticket = require('../models/Ticket');
 
-// @desc    Get all disputes
-// @route   GET /api/admin/disputes
-// @access  Private (Admin)
-exports.getAllDisputes = async (req, res) => {
+const getTimeAgo = (date) => {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  if (seconds < 60) return 'Just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return `${Math.floor(seconds / 604800)}w ago`;
+};
+
+exports.getSupportTickets = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 20,
-      status,
-      priority,
-      sortBy = 'createdAt',
-      order = 'desc',
-    } = req.query;
-
+    const { status, priority, type, page = 1, limit = 20 } = req.query;
+    
     const query = {};
-    if (status) query.status = status;
-    if (priority) query.priority = priority;
+    if (status && status !== 'all') query.status = status;
+    if (priority && priority !== 'all') query.priority = priority;
+    if (type && type !== 'all') query.category = type;
 
-    const disputes = await Dispute.find(query)
-      .populate('job', 'title')
-      .populate('client', 'firstName lastName email')
-      .populate('freelancer', 'firstName lastName email')
-      .populate('assignedTo', 'firstName lastName')
-      .sort({ [sortBy]: order === 'desc' ? -1 : 1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    const tickets = await Ticket.find(query)
+      .populate('user', 'firstName lastName email avatar')
+      .sort({ priority: -1, createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
 
-    const count = await Dispute.countDocuments(query);
+    const total = await Ticket.countDocuments(query);
 
-    res.status(200).json({
+    const formattedTickets = tickets.map(ticket => ({
+      _id: ticket._id,
+      title: ticket.title,
+      description: ticket.description,
+      priority: ticket.priority,
+      status: ticket.status,
+      category: ticket.category,
+      author: ticket.user ? 
+        `${ticket.user.firstName} ${ticket.user.lastName}` : 
+        'Unknown',
+      authorEmail: ticket.user?.email,
+      timeAgo: getTimeAgo(ticket.createdAt),
+      createdAt: ticket.createdAt
+    }));
+
+    res.json({
       success: true,
-      data: {
-        disputes,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(count / limit),
-          totalDisputes: count,
-        },
-      },
+      data: formattedTickets,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
     });
   } catch (error) {
-    logger.error(`Get disputes error: ${error.message}`);
+    console.error('❌ Get support tickets error:', error.message);
     res.status(500).json({
       success: false,
-      message: 'Error fetching disputes',
+      error: 'Failed to fetch support tickets',
+      code: 'TICKETS_ERROR'
     });
   }
 };
 
-// @desc    Get dispute by ID
-// @route   GET /api/admin/disputes/:disputeId
-// @access  Private (Admin)
-exports.getDisputeById = async (req, res) => {
+exports.getTicketById = async (req, res) => {
   try {
-    const dispute = await Dispute.findById(req.params.disputeId)
-      .populate('job')
-      .populate('client', 'firstName lastName email profilePicture')
-      .populate('freelancer', 'firstName lastName email profilePicture')
-      .populate('assignedTo', 'firstName lastName')
-      .populate('resolvedBy', 'firstName lastName');
+    const { ticketId } = req.params;
+    
+    const ticket = await Ticket.findById(ticketId)
+      .populate('user', 'firstName lastName email avatar')
+      .populate('assignedTo', 'firstName lastName email')
+      .populate('responses.admin', 'firstName lastName');
 
-    if (!dispute) {
-      return res.status(404).json({
+    if (!ticket) {
+      return res.status(404).json({ 
         success: false,
-        message: 'Dispute not found',
+        error: 'Ticket not found',
+        code: 'TICKET_NOT_FOUND'
       });
     }
 
-    res.status(200).json({
+    res.json({
       success: true,
-      data: dispute,
+      data: ticket
     });
   } catch (error) {
-    logger.error(`Get dispute error: ${error.message}`);
+    console.error('❌ Get ticket by ID error:', error.message);
     res.status(500).json({
       success: false,
-      message: 'Error fetching dispute',
+      error: 'Failed to fetch ticket',
+      code: 'TICKET_ERROR'
     });
   }
 };
 
-// @desc    Assign dispute to admin
-// @route   PUT /api/admin/disputes/:disputeId/assign
-// @access  Private (Admin)
-exports.assignDispute = async (req, res) => {
+exports.updateTicketStatus = async (req, res) => {
   try {
-    const { adminId } = req.body;
-    const dispute = await Dispute.findById(req.params.disputeId);
+    const { ticketId } = req.params;
+    const { status } = req.body;
 
-    if (!dispute) {
-      return res.status(404).json({
+    if (!['new', 'open', 'pending', 'resolved', 'closed'].includes(status)) {
+      return res.status(400).json({
         success: false,
-        message: 'Dispute not found',
+        error: 'Invalid status value',
+        code: 'INVALID_STATUS'
       });
     }
 
-    dispute.assignedTo = adminId || req.admin.id;
-    dispute.status = 'in_progress';
-    await dispute.save();
+    const ticket = await Ticket.findByIdAndUpdate(
+      ticketId,
+      { status, updatedAt: new Date() },
+      { new: true }
+    );
 
-    logger.info(`Dispute ${dispute._id} assigned to admin ${dispute.assignedTo}`);
-
-    res.status(200).json({
-      success: true,
-      message: 'Dispute assigned successfully',
-      data: dispute,
-    });
-  } catch (error) {
-    logger.error(`Assign dispute error: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: 'Error assigning dispute',
-    });
-  }
-};
-
-// @desc    Resolve dispute
-// @route   PUT /api/admin/disputes/:disputeId/resolve
-// @access  Private (Admin)
-exports.resolveDispute = async (req, res) => {
-  try {
-    const { resolution, refundAmount, refundTo } = req.body;
-    const dispute = await Dispute.findById(req.params.disputeId);
-
-    if (!dispute) {
-      return res.status(404).json({
+    if (!ticket) {
+      return res.status(404).json({ 
         success: false,
-        message: 'Dispute not found',
+        error: 'Ticket not found',
+        code: 'TICKET_NOT_FOUND'
       });
     }
 
-    dispute.status = 'resolved';
-    dispute.resolution = resolution;
-    dispute.resolvedBy = req.admin.id;
-    dispute.resolvedAt = Date.now();
-
-    // Handle refund if specified
-    if (refundAmount && refundTo) {
-      const transaction = await Transaction.create({
-        type: 'refund',
-        amount: refundAmount,
-        recipient: refundTo,
-        job: dispute.job,
-        description: `Refund from dispute resolution: ${dispute._id}`,
-        status: 'completed',
-      });
-
-      dispute.refundTransaction = transaction._id;
-    }
-
-    await dispute.save();
-
-    logger.info(`Dispute ${dispute._id} resolved by admin ${req.admin.email}`);
-
-    res.status(200).json({
+    res.json({ 
       success: true,
-      message: 'Dispute resolved successfully',
-      data: dispute,
+      message: 'Ticket status updated',
+      data: ticket
     });
   } catch (error) {
-    logger.error(`Resolve dispute error: ${error.message}`);
+    console.error('❌ Update ticket status error:', error.message);
     res.status(500).json({
       success: false,
-      message: 'Error resolving dispute',
+      error: 'Failed to update ticket status',
+      code: 'UPDATE_ERROR'
     });
   }
 };
 
-// @desc    Add message to dispute
-// @route   POST /api/admin/disputes/:disputeId/messages
-// @access  Private (Admin)
-exports.addDisputeMessage = async (req, res) => {
+exports.respondToTicket = async (req, res) => {
   try {
+    const { ticketId } = req.params;
     const { message } = req.body;
-    const dispute = await Dispute.findById(req.params.disputeId);
 
-    if (!dispute) {
-      return res.status(404).json({
+    if (!message || message.trim().length === 0) {
+      return res.status(400).json({
         success: false,
-        message: 'Dispute not found',
+        error: 'Message is required',
+        code: 'MISSING_MESSAGE'
       });
     }
 
-    dispute.messages.push({
-      sender: req.admin.id,
-      senderModel: 'Admin',
-      message,
-      timestamp: Date.now(),
-    });
+    const ticket = await Ticket.findByIdAndUpdate(
+      ticketId,
+      {
+        $push: {
+          responses: {
+            admin: req.admin._id,
+            message: message.trim(),
+            createdAt: new Date()
+          }
+        },
+        status: 'pending'
+      },
+      { new: true }
+    );
 
-    await dispute.save();
+    if (!ticket) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Ticket not found',
+        code: 'TICKET_NOT_FOUND'
+      });
+    }
 
-    res.status(200).json({
+    res.json({ 
       success: true,
-      message: 'Message added successfully',
-      data: dispute,
+      message: 'Response added successfully',
+      data: ticket
     });
   } catch (error) {
-    logger.error(`Add dispute message error: ${error.message}`);
+    console.error('❌ Respond to ticket error:', error.message);
     res.status(500).json({
       success: false,
-      message: 'Error adding message',
+      error: 'Failed to add response',
+      code: 'RESPONSE_ERROR'
     });
   }
 };

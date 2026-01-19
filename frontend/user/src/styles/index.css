@@ -1,5 +1,7 @@
-
- /* FILE: frontend/user/src/styles/index.css */
+/* ============================================
+   FILE: frontend/user/src/styles/index.css
+   Updated with Dark Mode Support
+   ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
 
@@ -17,22 +19,131 @@ body {
   font-family: 'Manrope', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Custom scrollbar */
+/* Light mode body */
+body {
+  @apply bg-white text-gray-900;
+}
+
+/* Dark mode body */
+.dark body {
+  @apply bg-bg-dark text-gray-100;
+}
+
+/* Custom scrollbar - Light mode */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  @apply bg-slate-100;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  @apply bg-slate-300 hover:bg-slate-400;
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
+/* Custom scrollbar - Dark mode */
+.dark ::-webkit-scrollbar-track {
+  @apply bg-slate-800;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-slate-600 hover:bg-slate-500;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  @apply transition-colors duration-200;
+}
+
+/* Disable transitions on theme change to prevent flash */
+.theme-transition-disable * {
+  transition: none !important;
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .shadow-soft {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  .dark .shadow-soft {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Form inputs dark mode improvements */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  @apply bg-slate-800 border-slate-700 text-white placeholder-slate-500;
+}
+
+.dark input:focus:not([type="checkbox"]):not([type="radio"]),
+.dark textarea:focus,
+.dark select:focus {
+  @apply border-primary ring-primary/20;
+}
+
+/* Modal/Overlay dark mode */
+.dark .modal-overlay {
+  @apply bg-black/70;
+}
+
+/* Card hover effects */
+.card-hover {
+  @apply transition-all duration-200 hover:shadow-lg;
+}
+
+.dark .card-hover:hover {
+  @apply shadow-card-dark;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Skeleton loader for dark mode */
+.dark .skeleton {
+  @apply bg-slate-800;
+  background: linear-gradient(
+    90deg,
+    #1e293b 25%,
+    #334155 50%,
+    #1e293b 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Print styles - always light */
+@media print {
+  * {
+    @apply !bg-white !text-black;
+  }
 }

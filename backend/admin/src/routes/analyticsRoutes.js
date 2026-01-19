@@ -1,19 +1,15 @@
-
 // ============================================
 // FILE: backend/admin/src/routes/analyticsRoutes.js
 // ============================================
 const express = require('express');
-const {
-  getPlatformAnalytics,
-  getFinancialAnalytics,
-} = require('../controllers/analyticsController');
-const { protect, authorize } = require('../middlewares/adminAuth');
-
 const router = express.Router();
+const analyticsController = require('../controllers/analyticsController');
+const { adminAuth } = require('../middlewares/adminAuth');
 
-router.use(protect, authorize('view_analytics'));
+router.use(adminAuth);
 
-router.get('/', getPlatformAnalytics);
-router.get('/financial', getFinancialAnalytics);
+router.get('/dashboard/stats', analyticsController.getDashboardStats);
+router.get('/dashboard/revenue', analyticsController.getRevenueData);
+router.get('/dashboard/job-distribution', analyticsController.getJobDistribution);
 
 module.exports = router;

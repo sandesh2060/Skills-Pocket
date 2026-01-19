@@ -1,129 +1,123 @@
 // ============================================
 // FILE: backend/admin/src/controllers/jobManagementController.js
 // ============================================
-const Job = require('../models/Job');
-const logger = require('../utils/logger');
+// jobManagementController.js
+const Job = require('../../../user/src/models/Job');
+const User = require('../../../user/src/models/User');
 
-// @desc    Get all jobs
-// @route   GET /api/admin/jobs
-// @access  Private (Admin)
-exports.getAllJobs = async (req, res) => {
+exports.getPendingProjects = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 20,
-      status,
-      category,
-      search,
-      sortBy = 'createdAt',
-      order = 'desc',
-    } = req.query;
+    const { limit = 20 } = req.query;
 
-    const query = {};
+    const pendingProjects = await Job.find({ 
+      status: 'pending_approval' 
+    })
+    .populate('client', 'name email avatar')
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit));
 
-    if (status) query.status = status;
-    if (category) query.category = category;
+    const formattedProjects = pendingProjects.map(project => ({
+      _id: project._id,
+      title: project.title,
+      clientName: project.client?.name || 'Unknown Client',
+      clientAvatar: project.client?.avatar || '',
+      budget: project.budget,
+      category: project.category,
+      createdAt: project.createdAt
+    }));
+
+    res.json(formattedProjects);
+  } catch (error) {
+    console.error('Get pending projects error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.approveProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
     
-    if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-      ];
-    }
-
-    const jobs = await Job.find(query)
-      .populate('client', 'firstName lastName email')
-      .sort({ [sortBy]: order === 'desc' ? -1 : 1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const count = await Job.countDocuments(query);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        jobs,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(count / limit),
-          totalJobs: count,
-          hasNext: page * limit < count,
-          hasPrev: page > 1,
-        },
+    const project = await Job.findByIdAndUpdate(
+      projectId,
+      { 
+        status: 'active',
+        approvedBy: req.admin._id,
+        approvedAt: new Date()
       },
-    });
+      { new: true }
+    ).populate('client', 'name email');
+
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // TODO: Send notification to client
+    // await notificationService.send(project.client._id, 'project_approved', { project });
+
+    res.json({ message: 'Project approved successfully', project });
   } catch (error) {
-    logger.error(`Get jobs error: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching jobs',
-    });
+    console.error('Approve project error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 
-// @desc    Delete job
-// @route   DELETE /api/admin/jobs/:jobId
-// @access  Private (Admin)
-exports.deleteJob = async (req, res) => {
+exports.rejectProject = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.jobId);
+    const { projectId } = req.params;
+    const { reason } = req.body;
+    
+    const project = await Job.findByIdAndUpdate(
+      projectId,
+      { 
+        status: 'rejected',
+        rejectedBy: req.admin._id,
+        rejectedAt: new Date(),
+        rejectionReason: reason
+      },
+      { new: true }
+    ).populate('client', 'name email');
 
-    if (!job) {
-      return res.status(404).json({
-        success: false,
-        message: 'Job not found',
-      });
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
     }
 
-    job.status = 'deleted';
-    job.deletedAt = Date.now();
-    job.deletedBy = req.admin.id;
-    await job.save();
+    // TODO: Send notification to client
+    // await notificationService.send(project.client._id, 'project_rejected', { project, reason });
 
-    logger.warn(`Job deleted: ${job._id} by admin: ${req.admin.email}`);
-
-    res.status(200).json({
-      success: true,
-      message: 'Job deleted successfully',
-    });
+    res.json({ message: 'Project rejected', project });
   } catch (error) {
-    logger.error(`Delete job error: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting job',
-    });
+    console.error('Reject project error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 
-// @desc    Feature/Unfeature job
-// @route   PUT /api/admin/jobs/:jobId/feature
-// @access  Private (Admin)
-exports.toggleJobFeature = async (req, res) => {
+exports.getAllProjects = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.jobId);
+    const { status, page = 1, limit = 20 } = req.query;
+    
+    const query = status ? { status } : {};
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    if (!job) {
-      return res.status(404).json({
-        success: false,
-        message: 'Job not found',
-      });
-    }
+    const [projects, total] = await Promise.all([
+      Job.find(query)
+        .populate('client', 'name email avatar')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Job.countDocuments(query)
+    ]);
 
-    job.isFeatured = !job.isFeatured;
-    await job.save();
-
-    logger.info(`Job ${job.isFeatured ? 'featured' : 'unfeatured'}: ${job._id} by admin: ${req.admin.email}`);
-
-    res.status(200).json({
-      success: true,
-      message: `Job ${job.isFeatured ? 'featured' : 'unfeatured'} successfully`,
-      data: job,
+    res.json({
+      projects,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
     });
   } catch (error) {
-    logger.error(`Toggle job feature error: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: 'Error updating job',
-    });
+    console.error('Get all projects error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
