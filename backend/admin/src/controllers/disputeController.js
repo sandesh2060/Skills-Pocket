@@ -1,190 +1,319 @@
 // ============================================
-// FILE 3: backend/admin/src/controllers/disputeController.js
-// FIXED: Proper error handling + ALL exports
+// FILE: backend/admin/src/controllers/disputeController.js
+// COMPLETE IMPLEMENTATION - Matches Frontend Expectations
 // ============================================
-const Ticket = require('../models/Ticket');
+const Dispute = require('../models/Dispute');
+const User = require('../models/User');
+const Job = require('../models/Job');
 
-const getTimeAgo = (date) => {
-  const seconds = Math.floor((new Date() - date) / 1000);
-  if (seconds < 60) return 'Just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  return `${Math.floor(seconds / 604800)}w ago`;
-};
-
-exports.getSupportTickets = async (req, res) => {
+// Get all disputes with filters
+exports.getAllDisputes = async (req, res) => {
   try {
-    const { status, priority, type, page = 1, limit = 20 } = req.query;
-    
+    const {
+      page = 1,
+      limit = 20,
+      status,
+      priority,
+      type,
+    } = req.query;
+
     const query = {};
-    if (status && status !== 'all') query.status = status;
-    if (priority && priority !== 'all') query.priority = priority;
-    if (type && type !== 'all') query.category = type;
+    
+    if (status) query.status = status;
+    if (priority) query.priority = priority;
+    if (type) query.type = type;
 
-    const tickets = await Ticket.find(query)
-      .populate('user', 'firstName lastName email avatar')
-      .sort({ priority: -1, createdAt: -1 })
-      .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit));
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const total = await Ticket.countDocuments(query);
-
-    const formattedTickets = tickets.map(ticket => ({
-      _id: ticket._id,
-      title: ticket.title,
-      description: ticket.description,
-      priority: ticket.priority,
-      status: ticket.status,
-      category: ticket.category,
-      author: ticket.user ? 
-        `${ticket.user.firstName} ${ticket.user.lastName}` : 
-        'Unknown',
-      authorEmail: ticket.user?.email,
-      timeAgo: getTimeAgo(ticket.createdAt),
-      createdAt: ticket.createdAt
-    }));
+    const [disputes, total] = await Promise.all([
+      Dispute.find(query)
+        .populate('raisedBy', 'firstName lastName email')
+        .populate('against', 'firstName lastName email')
+        .populate('job', 'title budget')
+        .populate('assignedTo', 'firstName lastName email')
+        .sort({ priority: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Dispute.countDocuments(query)
+    ]);
 
     res.json({
       success: true,
-      data: formattedTickets,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / parseInt(limit))
+      data: {
+        disputes,
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / parseInt(limit)),
+        totalDisputes: total
       }
     });
+
   } catch (error) {
-    console.error('❌ Get support tickets error:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch support tickets',
-      code: 'TICKETS_ERROR'
+    console.error('Get disputes error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch disputes' 
     });
   }
 };
 
-exports.getTicketById = async (req, res) => {
+// Get single dispute by ID
+exports.getDisputeById = async (req, res) => {
   try {
-    const { ticketId } = req.params;
-    
-    const ticket = await Ticket.findById(ticketId)
-      .populate('user', 'firstName lastName email avatar')
-      .populate('assignedTo', 'firstName lastName email')
-      .populate('responses.admin', 'firstName lastName');
+    const { disputeId } = req.params;
 
-    if (!ticket) {
+    const dispute = await Dispute.findById(disputeId)
+      .populate('raisedBy', 'firstName lastName email profilePicture')
+      .populate('against', 'firstName lastName email profilePicture')
+      .populate('job', 'title description budget status')
+      .populate('assignedTo', 'firstName lastName email')
+      .lean();
+
+    if (!dispute) {
       return res.status(404).json({ 
-        success: false,
-        error: 'Ticket not found',
-        code: 'TICKET_NOT_FOUND'
+        success: false, 
+        error: 'Dispute not found' 
       });
     }
 
     res.json({
       success: true,
-      data: ticket
+      data: dispute
     });
+
   } catch (error) {
-    console.error('❌ Get ticket by ID error:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch ticket',
-      code: 'TICKET_ERROR'
+    console.error('Get dispute error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch dispute' 
     });
   }
 };
 
-exports.updateTicketStatus = async (req, res) => {
+// Assign dispute to current admin
+exports.assignDispute = async (req, res) => {
   try {
-    const { ticketId } = req.params;
-    const { status } = req.body;
+    const { disputeId } = req.params;
 
-    if (!['new', 'open', 'pending', 'resolved', 'closed'].includes(status)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid status value',
-        code: 'INVALID_STATUS'
-      });
-    }
-
-    const ticket = await Ticket.findByIdAndUpdate(
-      ticketId,
-      { status, updatedAt: new Date() },
-      { new: true }
-    );
-
-    if (!ticket) {
+    const dispute = await Dispute.findById(disputeId);
+    
+    if (!dispute) {
       return res.status(404).json({ 
-        success: false,
-        error: 'Ticket not found',
-        code: 'TICKET_NOT_FOUND'
+        success: false, 
+        error: 'Dispute not found' 
       });
     }
 
-    res.json({ 
+    if (dispute.status !== 'pending') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Can only assign pending disputes' 
+      });
+    }
+
+    dispute.assignedTo = req.admin._id;
+    dispute.status = 'under_review';
+    dispute.assignedAt = new Date();
+    await dispute.save();
+
+    console.log(`✅ Admin ${req.admin.email} assigned dispute ${disputeId}`);
+
+    res.json({
       success: true,
-      message: 'Ticket status updated',
-      data: ticket
+      message: 'Dispute assigned successfully',
+      data: dispute
     });
+
   } catch (error) {
-    console.error('❌ Update ticket status error:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update ticket status',
-      code: 'UPDATE_ERROR'
+    console.error('Assign dispute error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to assign dispute' 
     });
   }
 };
 
-exports.respondToTicket = async (req, res) => {
+// Resolve dispute
+exports.resolveDispute = async (req, res) => {
   try {
-    const { ticketId } = req.params;
-    const { message } = req.body;
+    const { disputeId } = req.params;
+    const { decision, summary, refundAmount = 0 } = req.body;
 
-    if (!message || message.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Message is required',
-        code: 'MISSING_MESSAGE'
+    if (!decision || !summary) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Decision and summary are required' 
       });
     }
 
-    const ticket = await Ticket.findByIdAndUpdate(
-      ticketId,
-      {
-        $push: {
-          responses: {
-            admin: req.admin._id,
-            message: message.trim(),
-            createdAt: new Date()
-          }
-        },
-        status: 'pending'
-      },
+    const dispute = await Dispute.findById(disputeId);
+    
+    if (!dispute) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Dispute not found' 
+      });
+    }
+
+    if (dispute.status === 'resolved' || dispute.status === 'closed') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Dispute already resolved' 
+      });
+    }
+
+    dispute.status = 'resolved';
+    dispute.resolution = {
+      decision,
+      summary,
+      refundAmount: parseFloat(refundAmount) || 0,
+      resolvedBy: req.admin._id,
+      resolvedAt: new Date()
+    };
+    await dispute.save();
+
+    console.log(`✅ Admin ${req.admin.email} resolved dispute ${disputeId} - Decision: ${decision}`);
+
+    res.json({
+      success: true,
+      message: 'Dispute resolved successfully',
+      data: dispute
+    });
+
+  } catch (error) {
+    console.error('Resolve dispute error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to resolve dispute' 
+    });
+  }
+};
+
+// Update dispute priority
+exports.updateDisputePriority = async (req, res) => {
+  try {
+    const { disputeId } = req.params;
+    const { priority } = req.body;
+
+    const validPriorities = ['low', 'medium', 'high', 'critical'];
+    if (!validPriorities.includes(priority)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid priority level' 
+      });
+    }
+
+    const dispute = await Dispute.findByIdAndUpdate(
+      disputeId,
+      { priority },
       { new: true }
     );
 
-    if (!ticket) {
+    if (!dispute) {
       return res.status(404).json({ 
-        success: false,
-        error: 'Ticket not found',
-        code: 'TICKET_NOT_FOUND'
+        success: false, 
+        error: 'Dispute not found' 
       });
     }
 
-    res.json({ 
+    console.log(`✅ Admin ${req.admin.email} updated dispute ${disputeId} priority to ${priority}`);
+
+    res.json({
       success: true,
-      message: 'Response added successfully',
-      data: ticket
+      message: 'Priority updated successfully',
+      data: dispute
     });
+
   } catch (error) {
-    console.error('❌ Respond to ticket error:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to add response',
-      code: 'RESPONSE_ERROR'
+    console.error('Update priority error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to update priority' 
+    });
+  }
+};
+
+// Escalate dispute
+exports.escalateDispute = async (req, res) => {
+  try {
+    const { disputeId } = req.params;
+    const { reason } = req.body;
+
+    const dispute = await Dispute.findById(disputeId);
+    
+    if (!dispute) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Dispute not found' 
+      });
+    }
+
+    dispute.status = 'escalated';
+    dispute.escalation = {
+      reason,
+      escalatedBy: req.admin._id,
+      escalatedAt: new Date()
+    };
+    await dispute.save();
+
+    console.log(`✅ Admin ${req.admin.email} escalated dispute ${disputeId}`);
+
+    res.json({
+      success: true,
+      message: 'Dispute escalated successfully',
+      data: dispute
+    });
+
+  } catch (error) {
+    console.error('Escalate dispute error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to escalate dispute' 
+    });
+  }
+};
+
+// Close dispute
+exports.closeDispute = async (req, res) => {
+  try {
+    const { disputeId } = req.params;
+    const { note } = req.body;
+
+    const dispute = await Dispute.findById(disputeId);
+    
+    if (!dispute) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Dispute not found' 
+      });
+    }
+
+    if (dispute.status !== 'resolved') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Can only close resolved disputes' 
+      });
+    }
+
+    dispute.status = 'closed';
+    dispute.closedBy = req.admin._id;
+    dispute.closedAt = new Date();
+    dispute.closeNote = note;
+    await dispute.save();
+
+    console.log(`✅ Admin ${req.admin.email} closed dispute ${disputeId}`);
+
+    res.json({
+      success: true,
+      message: 'Dispute closed successfully',
+      data: dispute
+    });
+
+  } catch (error) {
+    console.error('Close dispute error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to close dispute' 
     });
   }
 };

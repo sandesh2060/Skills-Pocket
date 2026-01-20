@@ -1,59 +1,61 @@
 // ============================================
 // FILE: backend/admin/src/models/index.js
-// FIXED - Properly import schemas and register on admin mongoose instance
+// SIMPLE FIX - Just require the models directly
 // ============================================
 const mongoose = require('mongoose');
-const path = require('path');
 
 console.log('📍 Loading models for admin backend...');
 
-// Import Admin model (local to admin backend)
+// Simply require all models - they will register themselves
 const Admin = require('./Admin');
+const User = require('./User');
+const Job = require('./Job');
+const Transaction = require('./Transaction');
+const SupportTicket = require('./SupportTicket');
 
-// For User models, we need to get the SCHEMA and register it on OUR mongoose instance
-// Because the user backend's mongoose.model() registers on THEIR instance
+// Optional models
+let Proposal, Review, HireRequest, Message, Notification;
 
-let User, Job, Transaction, Proposal, Review, HireRequest, Message, Notification;
+try {
+  Proposal = require('./Proposal');
+  console.log('✅ Loaded Proposal model');
+} catch (e) {
+  console.log('ℹ️  Proposal model not found (optional)');
+}
 
-// Helper function to get or create model
-const getModel = (modelName, schemaPath) => {
-  // Check if already registered
-  if (mongoose.models[modelName]) {
-    return mongoose.models[modelName];
-  }
-  
-  try {
-    // Require the model file (this will register it on the user backend's instance)
-    const ModelFromUserBackend = require(schemaPath);
-    
-    // Get the schema from the model
-    const schema = ModelFromUserBackend.schema;
-    
-    // Register on OUR mongoose instance
-    return mongoose.model(modelName, schema);
-  } catch (error) {
-    console.error(`❌ Failed to load ${modelName}:`, error.message);
-    return null;
-  }
-};
+try {
+  Review = require('./Review');
+  console.log('✅ Loaded Review model');
+} catch (e) {
+  console.log('ℹ️  Review model not found (optional)');
+}
 
-console.log('📦 Registering models on admin mongoose instance...');
+try {
+  HireRequest = require('./HireRequest');
+  console.log('✅ Loaded HireRequest model');
+} catch (e) {
+  console.log('ℹ️  HireRequest model not found (optional)');
+}
 
-User = getModel('User', '../../../user/src/models/User');
-Job = getModel('Job', '../../../user/src/models/Job');
-Transaction = getModel('Transaction', '../../../user/src/models/Transaction');
-Proposal = getModel('Proposal', '../../../user/src/models/Proposal');
-Review = getModel('Review', '../../../user/src/models/Review');
-HireRequest = getModel('HireRequest', '../../../user/src/models/HireRequest');
-Message = getModel('Message', '../../../user/src/models/Message');
-Notification = getModel('Notification', '../../../user/src/models/Notification');
+try {
+  Message = require('./Message');
+  console.log('✅ Loaded Message model');
+} catch (e) {
+  console.log('ℹ️  Message model not found (optional)');
+}
 
-console.log('✅ Models registered');
+try {
+  Notification = require('./Notification');
+  console.log('✅ Loaded Notification model');
+} catch (e) {
+  console.log('ℹ️  Notification model not found (optional)');
+}
+
 console.log('📍 Registered mongoose models:', Object.keys(mongoose.models).join(', '));
 
-// Verify models are registered
+// Verify models
 const verifyModels = () => {
-  const requiredModels = ['User', 'Job', 'Transaction', 'Proposal', 'Review', 'Admin'];
+  const requiredModels = ['User', 'Job', 'Transaction', 'Admin', 'SupportTicket'];
   const registeredModels = Object.keys(mongoose.models);
   
   console.log('\n📦 Model Verification:');
@@ -64,7 +66,8 @@ const verifyModels = () => {
   
   let allRegistered = true;
   requiredModels.forEach(modelName => {
-    if (!mongoose.models[modelName]) {
+    const model = mongoose.models[modelName];
+    if (!model) {
       console.error(`❌ Model ${modelName} NOT registered!`);
       allRegistered = false;
     } else {
@@ -74,8 +77,7 @@ const verifyModels = () => {
   console.log('='.repeat(60));
   
   if (!allRegistered) {
-    console.error('\n⚠️  WARNING: Some models are missing!');
-    console.error('Database queries for missing models will fail.');
+    console.error('\n⚠️  WARNING: Some required models are missing!');
   } else {
     console.log('\n✅ All required models are registered!\n');
   }
@@ -83,12 +85,13 @@ const verifyModels = () => {
   return allRegistered;
 };
 
-// Export models
+// Export everything
 module.exports = {
   Admin,
   User,
   Job,
   Transaction,
+  SupportTicket,
   Proposal,
   Review,
   HireRequest,

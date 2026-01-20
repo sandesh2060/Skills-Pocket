@@ -1,10 +1,10 @@
 // ============================================
 // FILE: backend/admin/src/controllers/userManagementController.js
+// FIXED: Use admin backend's own models (not user backend's)
 // ============================================
-const User = require('../../../user/src/models/User');
-const Job = require('../../../user/src/models/Job');
-const Transaction = require('../../../user/src/models/Transaction');
-const { sendResponse, sendError } = require('../utils/responseHandler');
+const User = require('../models/User');  // ✅ Changed from '../../../user/src/models/User'
+const Job = require('../models/Job');    // ✅ Changed from '../../../user/src/models/Job'
+const Transaction = require('../models/Transaction'); // ✅ Changed from '../../../user/src/models/Transaction'
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -20,9 +20,12 @@ exports.getAllUsers = async (req, res) => {
 
     const query = {};
 
-    if (role) query.role = role;
+    // Fixed: Handle 'all' filter properly
+    if (role && role !== 'all') query.role = role;
+    
     if (status === 'active') query.isActive = true;
     if (status === 'suspended') query.isSuspended = true;
+    if (status === 'pending') query.isVerified = false;
     if (status === 'inactive') query.isActive = false;
 
     if (search) {
@@ -41,16 +44,24 @@ exports.getAllUsers = async (req, res) => {
 
     const total = await User.countDocuments(query);
 
-    sendResponse(res, {
-      users,
-      currentPage: parseInt(page),
-      totalPages: Math.ceil(total / limit),
-      totalUsers: total,
-    }, 'Users retrieved successfully');
+    // Fixed: Return data in the format frontend expects
+    res.json({
+      success: true,
+      data: {
+        users,
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalUsers: total,
+      },
+      message: 'Users retrieved successfully'
+    });
 
   } catch (error) {
     console.error('Get users error:', error);
-    sendError(res, 'Failed to retrieve users', 500);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };
 
@@ -59,7 +70,10 @@ exports.getUserById = async (req, res) => {
     const user = await User.findById(req.params.id).select('-password');
 
     if (!user) {
-      return sendError(res, 'User not found', 404);
+      return res.status(404).json({ 
+        success: false, 
+        error: 'User not found' 
+      });
     }
 
     const jobsPosted = user.role === 'client' 
@@ -67,25 +81,32 @@ exports.getUserById = async (req, res) => {
       : 0;
 
     const jobsCompleted = user.role === 'freelancer'
-      ? await Job.countDocuments({ hiredFreelancer: user._id, status: 'completed' })
+      ? await Job.countDocuments({ freelancer: user._id, status: 'completed' })
       : 0;
 
     const transactions = await Transaction.find({
       $or: [{ from: user._id }, { to: user._id }],
     }).limit(10).sort('-createdAt');
 
-    sendResponse(res, {
-      user,
-      stats: {
-        jobsPosted,
-        jobsCompleted,
-        recentTransactions: transactions,
+    res.json({
+      success: true,
+      data: {
+        user,
+        stats: {
+          jobsPosted,
+          jobsCompleted,
+          recentTransactions: transactions,
+        },
       },
-    }, 'User details retrieved');
+      message: 'User details retrieved'
+    });
 
   } catch (error) {
     console.error('Get user error:', error);
-    sendError(res, 'Failed to get user', 500);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };
 
@@ -95,24 +116,30 @@ exports.suspendUser = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return sendError(res, 'User not found', 404);
+      return res.status(404).json({ 
+        success: false, 
+        error: 'User not found' 
+      });
     }
 
     user.isSuspended = true;
     user.suspensionReason = reason;
     await user.save();
 
-    await req.admin.logActivity(
-      'suspend_user',
-      `Suspended user ${user.email}. Reason: ${reason}`,
-      req.ip
-    );
+    console.log(`✅ Admin ${req.admin.email} suspended user ${user.email}. Reason: ${reason}`);
 
-    sendResponse(res, user, 'User suspended successfully');
+    res.json({
+      success: true,
+      data: user,
+      message: 'User suspended successfully'
+    });
 
   } catch (error) {
     console.error('Suspend user error:', error);
-    sendError(res, 'Failed to suspend user', 500);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };
 
@@ -121,24 +148,30 @@ exports.unsuspendUser = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return sendError(res, 'User not found', 404);
+      return res.status(404).json({ 
+        success: false, 
+        error: 'User not found' 
+      });
     }
 
     user.isSuspended = false;
     user.suspensionReason = null;
     await user.save();
 
-    await req.admin.logActivity(
-      'unsuspend_user',
-      `Unsuspended user ${user.email}`,
-      req.ip
-    );
+    console.log(`✅ Admin ${req.admin.email} unsuspended user ${user.email}`);
 
-    sendResponse(res, user, 'User unsuspended successfully');
+    res.json({
+      success: true,
+      data: user,
+      message: 'User unsuspended successfully'
+    });
 
   } catch (error) {
     console.error('Unsuspend user error:', error);
-    sendError(res, 'Failed to unsuspend user', 500);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };
 
@@ -147,22 +180,28 @@ exports.deleteUser = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return sendError(res, 'User not found', 404);
+      return res.status(404).json({ 
+        success: false, 
+        error: 'User not found' 
+      });
     }
 
     await user.deleteOne();
 
-    await req.admin.logActivity(
-      'delete_user',
-      `Deleted user ${user.email}`,
-      req.ip
-    );
+    console.log(`✅ Admin ${req.admin.email} deleted user ${user.email}`);
 
-    sendResponse(res, null, 'User deleted successfully');
+    res.json({
+      success: true,
+      data: null,
+      message: 'User deleted successfully'
+    });
 
   } catch (error) {
     console.error('Delete user error:', error);
-    sendError(res, 'Failed to delete user', 500);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };
 
@@ -171,22 +210,28 @@ exports.verifyUser = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return sendError(res, 'User not found', 404);
+      return res.status(404).json({ 
+        success: false, 
+        error: 'User not found' 
+      });
     }
 
     user.isVerified = true;
     await user.save();
 
-    await req.admin.logActivity(
-      'verify_user',
-      `Verified user ${user.email}`,
-      req.ip
-    );
+    console.log(`✅ Admin ${req.admin.email} verified user ${user.email}`);
 
-    sendResponse(res, user, 'User verified successfully');
+    res.json({
+      success: true,
+      data: user,
+      message: 'User verified successfully'
+    });
 
   } catch (error) {
     console.error('Verify user error:', error);
-    sendError(res, 'Failed to verify user', 500);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };

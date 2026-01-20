@@ -1,127 +1,124 @@
 // ============================================
 // FILE: backend/admin/src/models/Dispute.js
+// Complete Dispute Schema
 // ============================================
 const mongoose = require('mongoose');
 
 const disputeSchema = new mongoose.Schema({
-  job: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Job',
+  title: {
+    type: String,
     required: true,
+    trim: true
   },
-  raisedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  against: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+  description: {
+    type: String,
+    required: true
   },
   type: {
     type: String,
     enum: ['payment', 'quality', 'delivery', 'communication', 'other'],
-    required: true,
+    required: true
   },
-  title: {
-    type: String,
-    required: true,
-    maxlength: 200,
+  job: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Job',
+    required: true
   },
-  description: {
-    type: String,
-    required: true,
-    maxlength: 2000,
+  raisedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  evidence: [{
-    type: {
-      type: String,
-      enum: ['image', 'document', 'link'],
-    },
-    url: String,
-    description: String,
-  }],
+  against: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   status: {
     type: String,
     enum: ['pending', 'under_review', 'resolved', 'closed', 'escalated'],
-    default: 'pending',
+    default: 'pending'
   },
   priority: {
     type: String,
     enum: ['low', 'medium', 'high', 'critical'],
-    default: 'medium',
+    default: 'medium'
   },
   assignedTo: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Admin',
+    ref: 'Admin'
   },
+  assignedAt: Date,
+  evidence: [{
+    type: {
+      type: String,
+      enum: ['file', 'screenshot', 'message', 'other']
+    },
+    url: String,
+    description: String,
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   resolution: {
     decision: {
       type: String,
-      enum: ['favor_client', 'favor_freelancer', 'partial', 'dismissed'],
+      enum: ['favor_client', 'favor_freelancer', 'partial', 'dismissed']
     },
     summary: String,
-    refundAmount: Number,
+    refundAmount: {
+      type: Number,
+      default: 0
+    },
     resolvedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Admin',
+      ref: 'Admin'
     },
-    resolvedAt: Date,
+    resolvedAt: Date
   },
-  messages: [{
-    from: {
+  escalation: {
+    reason: String,
+    escalatedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'messages.fromModel',
+      ref: 'Admin'
     },
-    fromModel: {
-      type: String,
-      enum: ['User', 'Admin'],
-    },
+    escalatedAt: Date
+  },
+  closedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin'
+  },
+  closedAt: Date,
+  closeNote: String,
+  notes: [{
     message: String,
-    attachments: [String],
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-  }],
-  timeline: [{
-    event: String,
-    description: String,
-    by: {
+    addedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: 'timeline.byModel',
+      ref: 'Admin'
     },
-    byModel: {
-      type: String,
-      enum: ['User', 'Admin'],
-    },
-    timestamp: {
+    addedAt: {
       type: Date,
-      default: Date.now,
-    },
-  }],
+      default: Date.now
+    }
+  }]
 }, {
-  timestamps: true,
+  timestamps: true
 });
 
 // Indexes
+disputeSchema.index({ status: 1 });
+disputeSchema.index({ priority: 1 });
+disputeSchema.index({ type: 1 });
 disputeSchema.index({ job: 1 });
 disputeSchema.index({ raisedBy: 1 });
-disputeSchema.index({ status: 1, priority: 1 });
+disputeSchema.index({ against: 1 });
 disputeSchema.index({ assignedTo: 1 });
 disputeSchema.index({ createdAt: -1 });
 
-// Add timeline entry
-disputeSchema.methods.addTimelineEvent = function(event, description, by, byModel) {
-  this.timeline.push({
-    event,
-    description,
-    by,
-    byModel,
-    timestamp: new Date(),
-  });
-  return this.save();
-};
+// Delete existing model if it exists to prevent caching issues
+if (mongoose.models.Dispute) {
+  delete mongoose.models.Dispute;
+}
 
-module.exports = mongoose.model('Dispute', disputeSchema);
+module.exports = mongoose.connection.model('Dispute', disputeSchema);

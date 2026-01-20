@@ -1,5 +1,8 @@
+//File : frontend/user/src/pages/Login.jsx
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 // ============================================
 // SVG ICONS
@@ -82,6 +85,8 @@ const ThemeToggle = () => {
 // ============================================
 export default function UnifiedLogin() {
   const navigate = useNavigate();
+  const { login } = useAuth(); // ✅ IMPORTANT: Import login from AuthContext
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -110,89 +115,92 @@ export default function UnifiedLogin() {
   // Handle form submission
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-  try {
-    const { email, password } = formData;
+    try {
+      const { email, password } = formData;
 
-    // First, always try the user API (port 5000)
-    let response = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    let data = await response.json();
-
-    console.log("📊 User API Response:", { success: response.ok, data });
-
-    if (!response.ok) {
-      // If user API failed, try admin API
-      console.log("⚠️ User API failed, trying Admin API...");
-      response = await fetch("http://localhost:5001/api/admin/auth/login", {
+      // First, always try the user API (port 5000)
+      let response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      data = await response.json();
-      console.log("📊 Admin API Response:", { success: response.ok, data });
+      let data = await response.json();
+
+      console.log("📊 User API Response:", { success: response.ok, data });
 
       if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
-    }
+        // If user API failed, try admin API
+        console.log("⚠️ User API failed, trying Admin API...");
+        response = await fetch("http://localhost:5001/api/admin/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
 
-    if (data.success) {
-      const token = data.data.token;
-      const userData = data.data.admin || data.data.user;
-      const isAdminUser = !!data.data.admin || userData?.role === "admin";
+        data = await response.json();
+        console.log("📊 Admin API Response:", { success: response.ok, data });
 
-      console.log("✅ Login successful!");
-      console.log("👤 User Data:", userData);
-      console.log("🔑 Is Admin:", isAdminUser);
-      console.log("📦 Token:", token.substring(0, 20) + "...");
-
-      if (isAdminUser) {
-        // Admin login - redirect to admin dashboard
-        localStorage.setItem("adminToken", token);
-        localStorage.setItem("adminData", JSON.stringify(userData));
-
-        // Create redirect URL with params
-        const adminData = btoa(JSON.stringify(userData));
-        const redirectUrl = `http://localhost:5174/dashboard?token=${encodeURIComponent(token)}&admin=${encodeURIComponent(adminData)}`;
-
-        console.log("🚀 REDIRECTING TO ADMIN DASHBOARD");
-        console.log("🔗 Full URL:", redirectUrl);
-
-        // Small delay to see the logs
-        setTimeout(() => {
-          window.location.href = redirectUrl;
-        }, 500);
-      } else {
-        // Regular user login
-        localStorage.setItem("token", token);
-        localStorage.setItem("userType", "user");
-        localStorage.setItem("user", JSON.stringify(userData));
-
-        console.log("👤 Redirecting to user dashboard:", userData.role);
-
-        if (userData.role === "freelancer") {
-          navigate("/freelancer/dashboard", { replace: true });
-        } else if (userData.role === "client") {
-          navigate("/client/dashboard", { replace: true });
+        if (!response.ok) {
+          throw new Error(data.message || "Login failed");
         }
       }
+
+      if (data.success) {
+        const token = data.data.token;
+        const userData = data.data.admin || data.data.user;
+        const isAdminUser = !!data.data.admin || userData?.role === "admin";
+
+        console.log("✅ Login successful!");
+        console.log("👤 User Data:", userData);
+        console.log("🔑 Is Admin:", isAdminUser);
+        console.log("📦 Token:", token.substring(0, 20) + "...");
+        console.log("📦 Full User Object:", JSON.stringify(userData, null, 2));
+
+        if (isAdminUser) {
+          // Admin login - redirect to admin dashboard
+          localStorage.setItem("adminToken", token);
+          localStorage.setItem("adminData", JSON.stringify(userData));
+
+          // Create redirect URL with params
+          const adminData = btoa(JSON.stringify(userData));
+          const redirectUrl = `http://localhost:5174/dashboard?token=${encodeURIComponent(token)}&admin=${encodeURIComponent(adminData)}`;
+
+          console.log("🚀 REDIRECTING TO ADMIN DASHBOARD");
+          console.log("🔗 Full URL:", redirectUrl);
+
+          // Small delay to see the logs
+          setTimeout(() => {
+            window.location.href = redirectUrl;
+          }, 500);
+        } else {
+          // ✅ FIXED: Use AuthContext login method instead of direct localStorage
+          console.log("👤 Using AuthContext login method");
+          login(token, userData, "user");
+
+          console.log("👤 Redirecting to user dashboard:", userData.role);
+
+          // Navigate after a tiny delay to ensure state is updated
+          setTimeout(() => {
+            if (userData.role === "freelancer") {
+              navigate("/freelancer/dashboard", { replace: true });
+            } else if (userData.role === "client") {
+              navigate("/client/dashboard", { replace: true });
+            }
+          }, 100);
+        }
+      }
+    } catch (err) {
+      console.error("❌ Login error:", err);
+      setError(err.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("❌ Login error:", err);
-    setError(err.message || "Login failed. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   // Show admin indicator if email matches admin pattern OR if we detect admin role
   const showAdminBadge =
     formData.email &&

@@ -14,7 +14,8 @@ const apiService = {
       }
     });
     if (!response.ok) throw new Error('Failed to fetch stats');
-    return response.json();
+    const result = await response.json();
+    return result.data || result;
   },
 
   async getRevenueData(range = '30d') {
@@ -25,7 +26,8 @@ const apiService = {
       }
     });
     if (!response.ok) throw new Error('Failed to fetch revenue data');
-    return response.json();
+    const result = await response.json();
+    return result.data || result;
   },
 
   async getJobDistribution() {
@@ -36,7 +38,8 @@ const apiService = {
       }
     });
     if (!response.ok) throw new Error('Failed to fetch job distribution');
-    return response.json();
+    const result = await response.json();
+    return result.data || result;
   },
 
   async getPendingProjects() {
@@ -47,7 +50,8 @@ const apiService = {
       }
     });
     if (!response.ok) throw new Error('Failed to fetch pending projects');
-    return response.json();
+    const result = await response.json();
+    return result.data || result;
   },
 
   async getSupportTickets() {
@@ -58,7 +62,9 @@ const apiService = {
       }
     });
     if (!response.ok) throw new Error('Failed to fetch support tickets');
-    return response.json();
+    const result = await response.json();
+    // Backend returns { success: true, message: '...', data: [...] }
+    return Array.isArray(result.data) ? result.data : [];
   },
 
   async approveProject(projectId) {
@@ -70,7 +76,8 @@ const apiService = {
       }
     });
     if (!response.ok) throw new Error('Failed to approve project');
-    return response.json();
+    const result = await response.json();
+    return result.data || result;
   },
 
   async downloadReport(range) {
@@ -155,10 +162,10 @@ const AdminDashboard = () => {
       ]);
 
       setStats(statsData);
-      setRevenueData(revenueData);
-      setJobDistribution(jobData);
-      setPendingProjects(projectsData);
-      setSupportTickets(ticketsData);
+      setRevenueData(Array.isArray(revenueData) ? revenueData : []);
+      setJobDistribution(Array.isArray(jobData) ? jobData : []);
+      setPendingProjects(Array.isArray(projectsData) ? projectsData : []);
+      setSupportTickets(Array.isArray(ticketsData) ? ticketsData : []);
     } catch (err) {
       setError(err.message);
       console.error('Dashboard error:', err);
@@ -199,7 +206,7 @@ const AdminDashboard = () => {
       medium: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
       low: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
     };
-    return colors[priority.toLowerCase()] || colors.low;
+    return colors[priority?.toLowerCase()] || colors.low;
   };
 
   if (error) {
@@ -258,9 +265,9 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatsCard
             title="Total Users"
-            value={stats.totalUsers.value.toLocaleString()}
-            trend={stats.totalUsers.trend}
-            trendValue={stats.totalUsers.trendValue}
+            value={(stats?.totalUsers?.value || 0).toLocaleString()}
+            trend={stats?.totalUsers?.trend || 'up'}
+            trendValue={stats?.totalUsers?.trendValue || '0%'}
             icon={Users}
             iconBg="bg-blue-50 dark:bg-blue-900/20"
             iconColor="text-blue-600"
@@ -268,9 +275,9 @@ const AdminDashboard = () => {
           />
           <StatsCard
             title="Active Jobs"
-            value={stats.activeJobs.value.toLocaleString()}
-            trend={stats.activeJobs.trend}
-            trendValue={stats.activeJobs.trendValue}
+            value={(stats?.activeJobs?.value || 0).toLocaleString()}
+            trend={stats?.activeJobs?.trend || 'up'}
+            trendValue={stats?.activeJobs?.trendValue || '0%'}
             icon={Briefcase}
             iconBg="bg-green-50 dark:bg-green-900/20"
             iconColor="text-green-600"
@@ -278,9 +285,9 @@ const AdminDashboard = () => {
           />
           <StatsCard
             title="Total Revenue"
-            value={`$${(stats.totalRevenue.value / 1000).toFixed(1)}k`}
-            trend={stats.totalRevenue.trend}
-            trendValue={stats.totalRevenue.trendValue}
+            value={`$${((stats?.totalRevenue?.value || 0) / 1000).toFixed(1)}k`}
+            trend={stats?.totalRevenue?.trend || 'up'}
+            trendValue={stats?.totalRevenue?.trendValue || '0%'}
             icon={DollarSign}
             iconBg="bg-purple-50 dark:bg-purple-900/20"
             iconColor="text-purple-600"
@@ -288,9 +295,9 @@ const AdminDashboard = () => {
           />
           <StatsCard
             title="Escrow Balance"
-            value={`$${(stats.escrowBalance.value / 1000000).toFixed(1)}M`}
-            trend={stats.escrowBalance.trend}
-            trendValue={stats.escrowBalance.trendValue}
+            value={`$${((stats?.escrowBalance?.value || 0) / 1000000).toFixed(1)}M`}
+            trend={stats?.escrowBalance?.trend || 'down'}
+            trendValue={stats?.escrowBalance?.trendValue || '0%'}
             icon={DollarSign}
             iconBg="bg-amber-50 dark:bg-amber-900/20"
             iconColor="text-amber-600"

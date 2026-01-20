@@ -1,6 +1,6 @@
 // ============================================
 // FILE: frontend/admin/src/App.jsx
-// FINAL FIX - Correct routing structure
+// FIXED - Better login redirect with debugging
 // ============================================
 import {
   BrowserRouter,
@@ -22,6 +22,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import UserManagement from "./pages/UserManagement";
 import JobManagement from "./pages/JobManagement";
 import DisputeManagement from "./pages/DisputeManagement";
+import Settings from "./pages/Settings";
 
 // URL Auth Handler - Captures credentials from URL params
 const URLAuthHandler = ({ children }) => {
@@ -39,42 +40,42 @@ const URLAuthHandler = ({ children }) => {
       search: location.search,
       hasToken: !!token,
       hasAdmin: !!adminEncoded,
-      tokenPreview: token ? token.substring(0, 20) + '...' : null
+      tokenPreview: token ? token.substring(0, 20) + "..." : null,
     });
 
     if (token && adminEncoded) {
       try {
         // Decode admin data
         const adminData = JSON.parse(atob(adminEncoded));
-        
+
         console.log("✅ Admin credentials decoded:", {
           email: adminData.email,
           role: adminData.role,
-          id: adminData.id
+          id: adminData.id,
         });
-        
+
         // Store credentials in localStorage FIRST
-        localStorage.setItem('adminToken', token);
-        localStorage.setItem('adminData', JSON.stringify(adminData));
-        
-        console.log('✅ Credentials stored in localStorage');
-        
+        localStorage.setItem("adminToken", token);
+        localStorage.setItem("adminData", JSON.stringify(adminData));
+
+        console.log("✅ Credentials stored in localStorage");
+
         // THEN call context login
         login(token, adminData);
-        
-        console.log('✅ Context login called');
-        
+
+        console.log("✅ Context login called");
+
         // Clean URL (remove credentials from URL)
-        const cleanPath = location.pathname || '/dashboard';
-        console.log('🧹 Cleaning URL, navigating to:', cleanPath);
+        const cleanPath = location.pathname || "/dashboard";
+        console.log("🧹 Cleaning URL, navigating to:", cleanPath);
         navigate(cleanPath, { replace: true });
       } catch (error) {
         console.error("❌ Failed to process auth credentials:", error);
       }
     } else {
-      console.log('ℹ️ No auth params in URL');
+      console.log("ℹ️ No auth params in URL");
     }
-  }, [location.search]); // Only depend on search params
+  }, [location.search]);
 
   return children;
 };
@@ -83,7 +84,7 @@ const URLAuthHandler = ({ children }) => {
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAdminAuth();
 
-  console.log('🛡️ ProtectedRoute - Auth status:', { isAuthenticated, loading });
+  console.log("🛡️ ProtectedRoute - Auth status:", { isAuthenticated, loading });
 
   if (loading) {
     return (
@@ -97,21 +98,68 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
+    const handleLoginRedirect = () => {
+      console.log("🖱️ Login button clicked");
+      console.log("🔄 Redirecting to: http://localhost:5173/login");
+
+      // Method 1: Direct location change
+      try {
+        window.location.href = "http://localhost:5173/login";
+      } catch (error) {
+        console.error("❌ Redirect failed:", error);
+        // Fallback method
+        window.open("http://localhost:5173/login", "_self");
+      }
+    };
+
     return (
       <div className="flex items-center justify-center h-screen bg-slate-900">
-        <div className="text-center max-w-md p-8 bg-slate-800 rounded-lg border border-slate-700">
-          <h2 className="text-2xl font-bold text-white mb-4">
+        <div className="text-center max-w-md p-8 bg-slate-800 rounded-lg border border-slate-700 shadow-2xl">
+          {/* Icon */}
+          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+
+          {/* Title */}
+          <h2 className="text-2xl font-bold text-white mb-3">
             Admin Access Required
           </h2>
-          <p className="text-slate-400 mb-6">
-            Please login from the main portal with your admin credentials.
+
+          {/* Description */}
+          <p className="text-slate-400 mb-6 leading-relaxed">
+            Please login from the main portal with your admin credentials to
+            access the admin dashboard.
           </p>
-          <a
-            href="http://localhost:5173/login"
-            className="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+
+          {/* Login Button */}
+          <button
+            onClick={handleLoginRedirect}
+            className="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
           >
             Go to Login
-          </a>
+          </button>
+
+          {/* Info */}
+          <div className="mt-6 pt-6 border-t border-slate-700">
+            <p className="text-sm text-slate-500">
+              Login with your admin email
+            </p>
+            <p className="text-xs text-slate-600 mt-1">
+              (e.g., *@admin.skillspocket.com)
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -139,11 +187,12 @@ function App() {
               <Route path="/users" element={<UserManagement />} />
               <Route path="/jobs" element={<JobManagement />} />
               <Route path="/disputes" element={<DisputeManagement />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
 
             {/* Redirect root to dashboard */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            
+
             {/* Catch all - redirect to dashboard */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

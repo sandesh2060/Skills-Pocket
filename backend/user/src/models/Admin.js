@@ -1,6 +1,6 @@
 // ============================================
-// FILE: backend/admin/src/models/Admin.js
-// COMPLETE - With all required fields and methods
+// FILE: backend/user/src/models/Admin.js
+// Shared Admin model for cross-backend authentication
 // ============================================
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
@@ -133,19 +133,10 @@ adminSchema.methods.resetLoginAttempts = async function () {
   });
 };
 
-// Log admin activity
+// Log admin activity (placeholder - implement as needed)
 adminSchema.methods.logActivity = async function (action, description, ip) {
-  console.log(`📝 Admin Activity - ${this.email}: ${action} - ${description} from ${ip}`);
-  // You can implement actual activity logging to database here if needed
-};
-
-// Remove password from JSON output
-adminSchema.methods.toJSON = function () {
-  const admin = this.toObject();
-  delete admin.password;
-  delete admin.loginAttempts;
-  delete admin.lockUntil;
-  return admin;
+  // You can implement activity logging here if needed
+  console.log(`Admin ${this.email} - ${action}: ${description} from ${ip}`);
 };
 
 module.exports = mongoose.model("Admin", adminSchema);

@@ -1,6 +1,14 @@
 // ============================================
 // FILE: frontend/user/src/utils/authUtils.js
+// FIXED - Consistent token storage with proper cleanup
 // ============================================
+
+// Storage keys - centralized for consistency
+const STORAGE_KEYS = {
+  TOKEN: 'authToken',
+  USER: 'user',
+  USER_TYPE: 'userType'
+};
 
 /**
  * Get admin email domains from environment
@@ -21,20 +29,32 @@ export const isAdminEmail = (email) => {
 
 /**
  * Store authentication data in localStorage
+ * IMPORTANT: This clears ALL old data first to prevent token mismatches
  */
 export const storeAuthData = (token, user, userType) => {
-  localStorage.setItem('authToken', token); // Changed from 'token' to 'authToken' to match everywhere
-  localStorage.setItem('user', JSON.stringify(user));
-  localStorage.setItem('userType', userType);
+  // ✅ CRITICAL: Clear all auth data first to prevent stale tokens
+  clearAuthData();
+  
+  // ✅ Then store new data
+  localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+  localStorage.setItem(STORAGE_KEYS.USER_TYPE, userType);
+  
+  console.log('✅ Auth data stored:', { 
+    hasToken: !!token, 
+    userId: user?.id, 
+    userRole: user?.role,
+    userType 
+  });
 };
 
 /**
  * Get authentication data from localStorage
  */
 export const getAuthData = () => {
-  const token = localStorage.getItem('authToken'); // Changed from 'token' to 'authToken'
-  const userStr = localStorage.getItem('user');
-  const userType = localStorage.getItem('userType');
+  const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+  const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+  const userType = localStorage.getItem(STORAGE_KEYS.USER_TYPE);
   
   let user = null;
   if (userStr) {
@@ -42,6 +62,8 @@ export const getAuthData = () => {
       user = JSON.parse(userStr);
     } catch (e) {
       console.error('Error parsing user data:', e);
+      // If user data is corrupted, clear everything
+      clearAuthData();
     }
   }
   
@@ -50,11 +72,20 @@ export const getAuthData = () => {
 
 /**
  * Clear authentication data from localStorage
+ * Also clears any legacy keys that might exist
  */
 export const clearAuthData = () => {
-  localStorage.removeItem('authToken'); // Changed from 'token' to 'authToken'
-  localStorage.removeItem('user');
-  localStorage.removeItem('userType');
+  // Clear current keys
+  localStorage.removeItem(STORAGE_KEYS.TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.USER);
+  localStorage.removeItem(STORAGE_KEYS.USER_TYPE);
+  
+  // ✅ Also clear legacy keys (in case old code used different keys)
+  localStorage.removeItem('token'); // Old key
+  localStorage.removeItem('adminToken');
+  localStorage.removeItem('adminData');
+  
+  console.log('🧹 Auth data cleared');
 };
 
 /**
@@ -96,7 +127,7 @@ export const getUserRole = () => {
  * Get user type (user or admin)
  */
 export const getUserType = () => {
-  return localStorage.getItem('userType') || null;
+  return localStorage.getItem(STORAGE_KEYS.USER_TYPE) || null;
 };
 
 /**
@@ -145,7 +176,7 @@ export const getUserInitials = (user) => {
  * Get auth token
  */
 export const getToken = () => {
-  return localStorage.getItem('authToken'); // Changed from 'token' to 'authToken'
+  return localStorage.getItem(STORAGE_KEYS.TOKEN);
 };
 
 /**
@@ -169,7 +200,7 @@ export const isTokenExpired = () => {
     const isExpired = now >= exp;
     
     if (isExpired) {
-      console.log('Token expired at:', new Date(exp));
+      console.log('⏰ Token expired at:', new Date(exp));
     }
     
     return isExpired;

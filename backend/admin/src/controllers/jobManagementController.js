@@ -1,9 +1,9 @@
 // ============================================
 // FILE: backend/admin/src/controllers/jobManagementController.js
+// FIXED: Use admin backend's own models
 // ============================================
-// jobManagementController.js
-const Job = require('../../../user/src/models/Job');
-const User = require('../../../user/src/models/User');
+const Job = require('../models/Job');  // ✅ Use local model
+const User = require('../models/User'); // ✅ Use local model
 
 exports.getPendingProjects = async (req, res) => {
   try {
@@ -12,15 +12,15 @@ exports.getPendingProjects = async (req, res) => {
     const pendingProjects = await Job.find({ 
       status: 'pending_approval' 
     })
-    .populate('client', 'name email avatar')
+    .populate('client', 'firstName lastName email profilePicture') // ✅ Fixed field names
     .sort({ createdAt: -1 })
     .limit(parseInt(limit));
 
     const formattedProjects = pendingProjects.map(project => ({
       _id: project._id,
       title: project.title,
-      clientName: project.client?.name || 'Unknown Client',
-      clientAvatar: project.client?.avatar || '',
+      clientName: project.client ? `${project.client.firstName} ${project.client.lastName}` : 'Unknown Client',
+      clientAvatar: project.client?.profilePicture || '',
       budget: project.budget,
       category: project.category,
       createdAt: project.createdAt
@@ -45,14 +45,11 @@ exports.approveProject = async (req, res) => {
         approvedAt: new Date()
       },
       { new: true }
-    ).populate('client', 'name email');
+    ).populate('client', 'firstName lastName email');
 
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
-
-    // TODO: Send notification to client
-    // await notificationService.send(project.client._id, 'project_approved', { project });
 
     res.json({ message: 'Project approved successfully', project });
   } catch (error) {
@@ -75,14 +72,11 @@ exports.rejectProject = async (req, res) => {
         rejectionReason: reason
       },
       { new: true }
-    ).populate('client', 'name email');
+    ).populate('client', 'firstName lastName email');
 
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
-
-    // TODO: Send notification to client
-    // await notificationService.send(project.client._id, 'project_rejected', { project, reason });
 
     res.json({ message: 'Project rejected', project });
   } catch (error) {
@@ -100,7 +94,7 @@ exports.getAllProjects = async (req, res) => {
 
     const [projects, total] = await Promise.all([
       Job.find(query)
-        .populate('client', 'name email avatar')
+        .populate('client', 'firstName lastName email profilePicture')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit)),

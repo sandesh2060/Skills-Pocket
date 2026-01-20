@@ -1,11 +1,13 @@
 // ============================================
 // FILE: backend/user/src/controllers/authController.js
-// PRODUCTION-READY VERSION
+// FIXED: Added Admin model check for admin login
 // ============================================
 const User = require("../models/User");
+const Admin = require("../models/Admin"); // ✅ ADD THIS LINE
 const { sendEmail } = require("../services/emailService");
 const logger = require("../utils/logger");
 const { generateOTP } = require("../utils/helpers");
+const jwt = require("jsonwebtoken"); // ✅ ADD THIS LINE
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -95,8 +97,82 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check if user exists
+    // ✅ STEP 1: Check if this is an admin login
+    const admin = await Admin.findOne({ email }).select("+password");
+    
+    if (admin) {
+      console.log("🔐 Admin login detected:", email);
+      
+      // Check if admin account is active
+      if (!admin.isActive) {
+        return res.status(403).json({
+          success: false,
+          message: "Admin account is deactivated",
+        });
+      }
+
+      // Check if admin account is locked
+      if (admin.isLocked()) {
+        return res.status(423).json({
+          success: false,
+          message: "Account is locked. Please try again later",
+        });
+      }
+
+      // Verify password
+      const isPasswordValid = await admin.comparePassword(password);
+      
+      if (!isPasswordValid) {
+        await admin.incLoginAttempts();
+        return res.status(401).json({
+          success: false,
+          message: "Invalid credentials",
+        });
+      }
+
+      // ✅ Password is correct - reset login attempts
+      await admin.resetLoginAttempts();
+      admin.lastLogin = new Date();
+      await admin.save();
+
+      // Log admin activity
+      await admin.logActivity("login", "Admin logged in via user API", req.ip);
+
+      // ✅ CRITICAL: Generate token with ADMIN ID, not user ID
+      const token = jwt.sign(
+        {
+          id: admin._id, // ✅ Use admin._id
+          email: admin.email,
+          role: "admin", // ✅ Set role as 'admin'
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRE || "7d" }
+      );
+
+      console.log("✅ Admin token generated with ID:", admin._id);
+
+      // Return admin data
+      return res.status(200).json({
+        success: true,
+        message: "Admin login successful",
+        data: {
+          admin: {
+            id: admin._id,
+            firstName: admin.firstName,
+            lastName: admin.lastName,
+            email: admin.email,
+            role: admin.role,
+            permissions: admin.permissions,
+            profilePicture: admin.profilePicture,
+          },
+          token,
+        },
+      });
+    }
+
+    // ✅ STEP 2: Not an admin, proceed with regular user login
     const user = await User.findOne({ email }).select("+password");
+    
     if (!user) {
       return res.status(401).json({
         success: false,

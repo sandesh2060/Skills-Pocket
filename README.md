@@ -3,6 +3,535 @@
 
 ## 📌 Overview
 
+# SkillsPocket - Complete Folder Structure
+
+```
+skillspocket/
+│
+├── backend/
+│   │
+│   ├── admin/                              # Admin Backend (Port 5001)
+│   │   ├── node_modules/
+│   │   ├── logs/
+│   │   ├── src/
+│   │   │   ├── config/
+│   │   │   │   └── database.js             # MongoDB connection
+│   │   │   │
+│   │   │   ├── controllers/
+│   │   │   │   ├── adminAuthController.js  # Admin authentication
+│   │   │   │   ├── analyticsController.js  # Platform analytics
+│   │   │   │   ├── disputeController.js    # Dispute management
+│   │   │   │   ├── jobManagementController.js
+│   │   │   │   └── userManagementController.js
+│   │   │   │
+│   │   │   ├── middlewares/
+│   │   │   │   ├── adminAuth.js            # JWT verification
+│   │   │   │   ├── errorHandler.js         # Global error handling
+│   │   │   │   └── validator.js            # Request validation
+│   │   │   │
+│   │   │   ├── models/
+│   │   │   │   ├── Admin.js                # Admin user schema
+│   │   │   │   ├── Dispute.js              # Dispute schema
+│   │   │   │   ├── Job.js                  # Job schema
+│   │   │   │   ├── Proposal.js             # Proposal schema
+│   │   │   │   ├── SupportTicket.js        # Support ticket schema
+│   │   │   │   ├── Transaction.js          # Transaction schema
+│   │   │   │   └── User.js                 # User schema
+│   │   │   │
+│   │   │   ├── routes/
+│   │   │   │   ├── adminAuthRoutes.js      # /api/admin/auth/*
+│   │   │   │   ├── analyticsRoutes.js      # /api/admin/analytics/*
+│   │   │   │   ├── disputeRoutes.js        # /api/admin/disputes/*
+│   │   │   │   ├── jobManagementRoutes.js  # /api/admin/jobs/*
+│   │   │   │   ├── supportRoutes.js        # /api/admin/support/*
+│   │   │   │   └── userManagementRoutes.js # /api/admin/users/*
+│   │   │   │
+│   │   │   ├── scripts/
+│   │   │   │   └── addIndexes.js           # Database indexes
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   └── (future: email, notifications, etc.)
+│   │   │   │
+│   │   │   ├── utils/
+│   │   │   │   ├── logger.js               # Winston logger
+│   │   │   │   └── responseHandler.js      # Standard API responses
+│   │   │   │
+│   │   │   ├── app.js                      # Express app setup
+│   │   │   └── server.js                   # Server entry point
+│   │   │
+│   │   ├── .env                            # Admin environment variables
+│   │   ├── .env.example
+│   │   ├── .gitignore
+│   │   ├── package.json
+│   │   └── package-lock.json
+│   │
+│   └── user/                               # User Backend (Port 5000)
+│       ├── node_modules/
+│       ├── uploads/
+│       ├── src/
+│       │   ├── config/
+│       │   │   ├── cloudinary.js           # File upload config
+│       │   │   ├── database.js             # MongoDB connection
+│       │   │   ├── env.js                  # Environment loader
+│       │   │   └── redis.js                # Redis cache config
+│       │   │
+│       │   ├── controllers/
+│       │   │   ├── authController.js       # User authentication
+│       │   │   ├── freelancerController.js # Freelancer operations
+│       │   │   ├── hireController.js       # Hiring workflow
+│       │   │   ├── jobController.js        # Job CRUD operations
+│       │   │   ├── messageController.js    # Chat/messaging
+│       │   │   ├── notificationController.js
+│       │   │   ├── profileController.js    # User profiles
+│       │   │   ├── proposalController.js   # Proposal management
+│       │   │   ├── reviewController.js     # Reviews & ratings
+│       │   │   ├── supportController.js    # Support tickets
+│       │   │   ├── transactionController.js
+│       │   │   └── userController.js
+│       │   │
+│       │   ├── middlewares/
+│       │   │   ├── authMiddleware.js       # JWT auth
+│       │   │   ├── errorHandler.js         # Error handling
+│       │   │   ├── rateLimiter.js          # Rate limiting
+│       │   │   ├── upload.js               # File upload middleware
+│       │   │   └── validators.js           # Input validation
+│       │   │
+│       │   ├── models/
+│       │   │   ├── HireRequest.js
+│       │   │   ├── Job.js
+│       │   │   ├── Message.js
+│       │   │   ├── Notification.js
+│       │   │   ├── Proposal.js
+│       │   │   ├── Review.js
+│       │   │   ├── SupportTicket.js
+│       │   │   ├── Transaction.js
+│       │   │   └── User.js
+│       │   │
+│       │   ├── routes/
+│       │   │   ├── authRoutes.js           # /api/auth/*
+│       │   │   ├── freelancerRoutes.js     # /api/freelancers/*
+│       │   │   ├── hireRoutes.js           # /api/hire/*
+│       │   │   ├── jobRoutes.js            # /api/jobs/*
+│       │   │   ├── messageRoutes.js        # /api/messages/*
+│       │   │   ├── notificationRoutes.js   # /api/notifications/*
+│       │   │   ├── proposalRoutes.js       # /api/proposals/*
+│       │   │   ├── reviewRoutes.js         # /api/reviews/*
+│       │   │   ├── supportRoutes.js        # /api/support/*
+│       │   │   ├── transactionRoutes.js    # /api/transactions/*
+│       │   │   └── userRoutes.js           # /api/users/*
+│       │   │
+│       │   ├── services/
+│       │   │   ├── emailService.js         # Email notifications
+│       │   │   ├── notificationService.js  # Push notifications
+│       │   │   ├── paymentService.js       # Payment integration
+│       │   │   └── socketService.js        # WebSocket/real-time
+│       │   │
+│       │   ├── socket/
+│       │   │   ├── index.js                # Socket.IO setup
+│       │   │   ├── messageHandler.js       # Chat handlers
+│       │   │   └── notificationHandler.js  # Notification handlers
+│       │   │
+│       │   ├── utils/
+│       │   │   ├── constants.js            # App constants
+│       │   │   ├── helpers.js              # Utility functions
+│       │   │   ├── logger.js               # Winston logger
+│       │   │   └── validators.js           # Validation helpers
+│       │   │
+│       │   ├── app.js                      # Express app
+│       │   └── server.js                   # Server entry point
+│       │
+│       ├── .env
+│       ├── .env.example
+│       ├── .gitignore
+│       ├── package.json
+│       └── package-lock.json
+│
+├── frontend/
+│   │
+│   ├── admin/                              # Admin Dashboard (Port 5174)
+│   │   ├── node_modules/
+│   │   ├── public/
+│   │   │   ├── favicon.ico
+│   │   │   └── index.html
+│   │   │
+│   │   ├── src/
+│   │   │   ├── api/
+│   │   │   │   ├── analyticsApi.js         # Analytics endpoints
+│   │   │   │   ├── authApi.js              # Admin auth
+│   │   │   │   ├── axios.js                # Axios config
+│   │   │   │   ├── disputeApi.js           # Dispute management
+│   │   │   │   ├── jobApi.js               # Job management
+│   │   │   │   └── userApi.js              # User management
+│   │   │   │
+│   │   │   ├── components/
+│   │   │   │   ├── analytics/
+│   │   │   │   │   └── (analytics components)
+│   │   │   │   │
+│   │   │   │   ├── common/
+│   │   │   │   │   ├── Badge.jsx
+│   │   │   │   │   ├── ErrorBoundary.jsx
+│   │   │   │   │   ├── Header.jsx
+│   │   │   │   │   ├── Modal.jsx
+│   │   │   │   │   ├── StatCard.jsx
+│   │   │   │   │   ├── Table.jsx
+│   │   │   │   │   └── Toast.jsx
+│   │   │   │   │
+│   │   │   │   ├── layout/
+│   │   │   │   │   ├── AdminLayout.jsx     # Main layout wrapper
+│   │   │   │   │   ├── AdminNavbar.jsx     # Top navigation
+│   │   │   │   │   └── AdminSidebar.jsx    # Side navigation
+│   │   │   │   │
+│   │   │   │   └── users/
+│   │   │   │       └── (user management components)
+│   │   │   │
+│   │   │   ├── context/
+│   │   │   │   └── AdminAuthContext.jsx    # Admin auth state
+│   │   │   │
+│   │   │   ├── hooks/
+│   │   │   │   └── (custom React hooks)
+│   │   │   │
+│   │   │   ├── pages/
+│   │   │   │   ├── AdminDashboard.jsx      # Main dashboard
+│   │   │   │   ├── DisputeManagement.jsx   # Dispute handling
+│   │   │   │   ├── FinancialMonitoring.jsx # Financial overview
+│   │   │   │   ├── JobManagement.jsx       # Job moderation
+│   │   │   │   ├── Settings.jsx            # Admin settings
+│   │   │   │   └── UserManagement.jsx      # User management
+│   │   │   │
+│   │   │   ├── styles/
+│   │   │   │   └── (CSS/Tailwind styles)
+│   │   │   │
+│   │   │   ├── utils/
+│   │   │   │   ├── authUtils.js            # Auth helpers
+│   │   │   │   ├── constants.js            # Constants
+│   │   │   │   ├── errorHandler.js         # Error handling
+│   │   │   │   └── formatters.js           # Data formatting
+│   │   │   │
+│   │   │   ├── App.jsx                     # Main App component
+│   │   │   ├── index.css                   # Global styles
+│   │   │   └── main.jsx                    # React entry point
+│   │   │
+│   │   ├── .env                            # Admin frontend env
+│   │   ├── .env.example
+│   │   ├── .gitignore
+│   │   ├── index.html
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   ├── postcss.config.js               # PostCSS config
+│   │   ├── tailwind.config.js              # Tailwind CSS
+│   │   └── vite.config.js                  # Vite config
+│   │
+│   └── user/                               # User/Client Frontend (Port 5173)
+│       ├── node_modules/
+│       ├── public/
+│       │   └── index.html
+│       │
+│       ├── src/
+│       │   ├── api/
+│       │   │   ├── authApi.js              # Auth endpoints
+│       │   │   ├── axios.js                # Axios instance
+│       │   │   ├── jobApi.js               # Job endpoints
+│       │   │   ├── messageApi.js           # Messaging
+│       │   │   ├── notificationApi.js
+│       │   │   ├── profileApi.js
+│       │   │   ├── proposalApi.js
+│       │   │   ├── supportApi.js
+│       │   │   ├── transactionApi.js
+│       │   │   └── walletApi.js
+│       │   │
+│       │   ├── assets/
+│       │   │   ├── fonts/
+│       │   │   ├── icons/
+│       │   │   └── images/
+│       │   │
+│       │   ├── components/
+│       │   │   ├── auth/
+│       │   │   │   ├── LoginForm.jsx
+│       │   │   │   ├── RoleToggle.jsx
+│       │   │   │   ├── SignupForm.jsx
+│       │   │   │   └── SocialLogin.jsx
+│       │   │   │
+│       │   │   ├── common/
+│       │   │   │   ├── Button.jsx
+│       │   │   │   ├── Footer.jsx
+│       │   │   │   ├── Header.jsx
+│       │   │   │   ├── Input.jsx
+│       │   │   │   ├── Loader.jsx
+│       │   │   │   ├── Modal.jsx
+│       │   │   │   ├── ProtectedRoute.jsx
+│       │   │   │   ├── Skeleton.jsx
+│       │   │   │   └── ThemeToggle.jsx
+│       │   │   │
+│       │   │   ├── dashboard/
+│       │   │   │   ├── client/
+│       │   │   │   │   ├── ActiveProjects.jsx
+│       │   │   │   │   ├── ClientNavbar.jsx
+│       │   │   │   │   ├── ClientSidebar.jsx
+│       │   │   │   │   ├── ClientStats.jsx
+│       │   │   │   │   └── NewProposals.jsx
+│       │   │   │   │
+│       │   │   │   └── freelancer/
+│       │   │   │       ├── ActiveProposals.jsx
+│       │   │   │       ├── DashboardStats.jsx
+│       │   │   │       ├── EarningsChart.jsx
+│       │   │   │       ├── FreelancerNavbar.jsx
+│       │   │   │       ├── FreelancerSidebar.jsx
+│       │   │   │       └── ProfileCompletion.jsx
+│       │   │   │
+│       │   │   ├── hire/
+│       │   │   │   ├── FreelancerCard.jsx
+│       │   │   │   ├── FreelancerDetails.jsx
+│       │   │   │   ├── FreelancerFilters.jsx
+│       │   │   │   └── HireModal.jsx
+│       │   │   │
+│       │   │   ├── home/
+│       │   │   │   ├── FeaturedFreelancers.jsx
+│       │   │   │   ├── HeroSection.jsx
+│       │   │   │   ├── HowItWorks.jsx
+│       │   │   │   ├── ServicesSection.jsx
+│       │   │   │   ├── StatsSection.jsx
+│       │   │   │   └── TestimonialSection.jsx
+│       │   │   │
+│       │   │   ├── inbox/
+│       │   │   │   ├── ChatHeader.jsx
+│       │   │   │   ├── ChatWindow.jsx
+│       │   │   │   ├── ConversationList.jsx
+│       │   │   │   ├── FileAttachment.jsx
+│       │   │   │   ├── MessageBubble.jsx
+│       │   │   │   ├── MessageInput.jsx
+│       │   │   │   └── TypingIndicator.jsx
+│       │   │   │
+│       │   │   ├── jobs/
+│       │   │   │   ├── JobCard.jsx
+│       │   │   │   ├── JobDetails.jsx
+│       │   │   │   ├── JobFilters.jsx
+│       │   │   │   └── JobSearch.jsx
+│       │   │   │
+│       │   │   ├── messaging/
+│       │   │   │   ├── ConversationList.jsx
+│       │   │   │   ├── FileAttachment.jsx
+│       │   │   │   ├── MessageBubble.jsx
+│       │   │   │   ├── MessageInput.jsx
+│       │   │   │   └── MessageThread.jsx
+│       │   │   │
+│       │   │   ├── profile/
+│       │   │   │   ├── PortfolioGallery.jsx
+│       │   │   │   ├── ProfileHeader.jsx
+│       │   │   │   ├── ReviewsList.jsx
+│       │   │   │   └── SkillsSection.jsx
+│       │   │   │
+│       │   │   └── wallet/
+│       │   │       ├── TransactionTable.jsx
+│       │   │       ├── WalletStats.jsx
+│       │   │       └── WithdrawModal.jsx
+│       │   │
+│       │   ├── context/
+│       │   │   ├── AuthContext.jsx         # User auth state
+│       │   │   ├── NotificationContext.jsx # Notifications
+│       │   │   ├── SocketContext.jsx       # WebSocket state
+│       │   │   └── ThemeContext.jsx        # Theme (dark/light)
+│       │   │
+│       │   ├── hooks/
+│       │   │   ├── useAuth.js              # Auth hook
+│       │   │   ├── useDebounce.js          # Debounce hook
+│       │   │   ├── useJobs.js              # Jobs data hook
+│       │   │   ├── useMessages.js          # Messaging hook
+│       │   │   ├── useNotifications.js     # Notifications hook
+│       │   │   ├── useProfile.js           # Profile data hook
+│       │   │   ├── useSidebarData.js       # Sidebar state
+│       │   │   └── useWallet.js            # Wallet data hook
+│       │   │
+│       │   ├── pages/
+│       │   │   ├── ClientDashboard.jsx     # Client dashboard
+│       │   │   ├── ClientFinances.jsx      # Client payments
+│       │   │   ├── ClientHelp.jsx          # Client support
+│       │   │   ├── ClientHire.jsx          # Hire freelancers
+│       │   │   ├── ClientInbox.jsx         # Client messages
+│       │   │   ├── ClientJobs.jsx          # Posted jobs
+│       │   │   ├── ClientNotifications.jsx
+│       │   │   ├── ClientSettings.jsx
+│       │   │   ├── FreelancerBrowseJobs.jsx
+│       │   │   ├── FreelancerDashboard.jsx
+│       │   │   ├── FreelancerHelp.jsx
+│       │   │   ├── FreelancerInbox.jsx
+│       │   │   ├── FreelancerJobDetails.jsx
+│       │   │   ├── FreelancerJobs.jsx
+│       │   │   ├── FreelancerMessages.jsx
+│       │   │   ├── FreelancerNotifications.jsx
+│       │   │   ├── FreelancerProfile.jsx
+│       │   │   ├── FreelancerSettings.jsx
+│       │   │   ├── FreelancerWallet.jsx
+│       │   │   ├── Home.jsx                # Landing page
+│       │   │   ├── JobDetails.jsx
+│       │   │   ├── JobSearch.jsx
+│       │   │   ├── Login.jsx               # Login page
+│       │   │   ├── Messages.jsx
+│       │   │   ├── NotFound.jsx            # 404 page
+│       │   │   ├── Profile.jsx
+│       │   │   ├── Settings.jsx
+│       │   │   ├── Signup.jsx              # Signup page
+│       │   │   └── Wallet.jsx
+│       │   │
+│       │   ├── services/
+│       │   │   ├── api.js                  # Base API service
+│       │   │   ├── conversationService.js
+│       │   │   ├── freelancerService.js
+│       │   │   ├── hireService.js
+│       │   │   ├── messageService.js
+│       │   │   ├── notificationService.js
+│       │   │   ├── proposalService.js
+│       │   │   ├── socketService.js
+│       │   │   ├── transactionService.js
+│       │   │   └── userService.js
+│       │   │
+│       │   ├── styles/
+│       │   │   ├── animations.css          # CSS animations
+│       │   │   └── index.css               # Global styles
+│       │   │
+│       │   ├── utils/
+│       │   │   ├── authUtils.js            # Auth helpers
+│       │   │   ├── constants.js            # App constants
+│       │   │   ├── formatters.js           # Date/currency format
+│       │   │   ├── helpers.js              # Utility functions
+│       │   │   └── validators.js           # Form validation
+│       │   │
+│       │   ├── App.jsx                     # Main App
+│       │   ├── index.css                   # Root styles
+│       │   ├── main.jsx                    # Entry point
+│       │   └── routes.jsx                  # Route definitions
+│       │
+│       ├── .env
+│       ├── .env.example
+│       ├── .gitignore
+│       ├── index.html
+│       ├── package.json
+│       ├── package-lock.json
+│       ├── postcss.config.js
+│       ├── tailwind.config.js
+│       └── vite.config.js
+│
+├── shared/                                 # Shared utilities (optional)
+│   ├── constants/
+│   ├── types/
+│   └── validators/
+│
+├── .gitignore                              # Root gitignore
+├── docker-compose.yml                      # Docker setup (optional)
+└── README.md                               # Project documentation
+```
+
+---
+
+## 🚀 **Port Configuration**
+
+| Service | Port | URL |
+|---------|------|-----|
+| User Backend | 5000 | http://localhost:5000 |
+| Admin Backend | 5001 | http://localhost:5001 |
+| User Frontend | 5173 | http://localhost:5173 |
+| Admin Frontend | 5174 | http://localhost:5174 |
+| MongoDB | 27017 | mongodb://localhost:27017 |
+| Redis (optional) | 6379 | redis://localhost:6379 |
+
+---
+
+## 📝 **Environment Files**
+
+### `backend/admin/.env`
+```env
+NODE_ENV=development
+PORT=5001
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRE=7d
+FRONTEND_URL=http://localhost:5174
+```
+
+### `backend/user/.env`
+```env
+NODE_ENV=development
+PORT=5000
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRE=7d
+FRONTEND_URL=http://localhost:5173
+CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+CLOUDINARY_API_KEY=your_cloudinary_key
+CLOUDINARY_API_SECRET=your_cloudinary_secret
+```
+
+### `frontend/admin/.env`
+```env
+VITE_API_URL=http://localhost:5001/api/admin
+```
+
+### `frontend/user/.env`
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_SOCKET_URL=http://localhost:5000
+```
+
+---
+
+## 🏃 **Running the Full Stack**
+
+```bash
+# Terminal 1 - User Backend
+cd backend/user
+npm install
+npm run dev
+
+# Terminal 2 - Admin Backend
+cd backend/admin
+npm install
+npm run dev
+
+# Terminal 3 - User Frontend
+cd frontend/user
+npm install
+npm run dev
+
+# Terminal 4 - Admin Frontend
+cd frontend/admin
+npm install
+npm run dev
+```
+
+---
+
+## 📦 **Key Dependencies**
+
+### Backend (Both)
+- express
+- mongoose
+- jsonwebtoken
+- bcryptjs
+- dotenv
+- cors
+- winston (logging)
+
+### User Backend Additional
+- socket.io
+- cloudinary
+- multer
+- nodemailer
+
+### Frontend (Both)
+- react
+- react-router-dom
+- axios
+- tailwindcss
+- lucide-react (icons)
+
+### User Frontend Additional
+- socket.io-client
+- recharts (charts)
+- react-hot-toast
+
+---
+
+This structure follows **separation of concerns** and **scalability** principles!
+
 **skillspocket** is a full-stack freelancing marketplace inspired by platforms like Upwork, Fiverr, and Freelancer. It features a premium UI, modern animations, and scalable architecture.
 
 Clients can post projects, hire freelancers, manage milestones, and make secure payments. Freelancers can build professional profiles, submit proposals, communicate in real time, and track earnings.
