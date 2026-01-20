@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import StatsCard from '../components/admin/StatsCard';
+import StatsCard from '../components/common/StatCard';
 
 const FinancialMonitoring = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
